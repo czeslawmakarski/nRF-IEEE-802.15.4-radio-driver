@@ -148,26 +148,26 @@ typedef nrf_fem_control_cfg_t nrf_802154_fem_control_cfg_t;
         .ppi_ch_id_clr = NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL,       \
     })
 
-#define NRF_802154_FAL_DEFAULT_SETTINGS                                 \
-    ((nrf_fem_interface_config_t) {                                     \
-        .fem_config = {                                                 \
-            .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE,               \
-            .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE              \
-        },                                                              \
-        .pa_pin_config = {                                              \
-            .enable = 1,                                                \
-            .active_high = 1,                                           \
-            .gpio_pin = NRF_FEM_CONTROL_DEFAULT_PA_PIN,                 \
-            .gpiote_ch_id = NRF_FEM_CONTROL_DEFAULT_PA_GPIOTE_CHANNEL   \
-        },                                                              \
-        .lna_pin_config = {                                             \
-            .enable = 1,                                                \
-            .active_high = 1,                                           \
-            .gpio_pin = NRF_FEM_CONTROL_DEFAULT_LNA_PIN,                \
-            .gpiote_ch_id = NRF_FEM_CONTROL_DEFAULT_LNA_GPIOTE_CHANNEL  \
-        },                                                              \
-        .ppi_ch_id_set = NRF_FEM_CONTROL_DEFAULT_SET_PPI_CHANNEL,       \
-        .ppi_ch_id_clr = NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL,       \
+#define NRF_802154_FAL_DEFAULT_SETTINGS                                \
+    ((nrf_fem_interface_config_t) {                                    \
+        .fem_config = {                                                \
+            .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE,              \
+            .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE             \
+        },                                                             \
+        .pa_pin_config = {                                             \
+            .enable = 1,                                               \
+            .active_high = 1,                                          \
+            .gpio_pin = NRF_FEM_CONTROL_DEFAULT_PA_PIN,                \
+            .gpiote_ch_id = NRF_FEM_CONTROL_DEFAULT_PA_GPIOTE_CHANNEL  \
+        },                                                             \
+        .lna_pin_config = {                                            \
+            .enable = 1,                                               \
+            .active_high = 1,                                          \
+            .gpio_pin = NRF_FEM_CONTROL_DEFAULT_LNA_PIN,               \
+            .gpiote_ch_id = NRF_FEM_CONTROL_DEFAULT_LNA_GPIOTE_CHANNEL \
+        },                                                             \
+        .ppi_ch_id_set = NRF_FEM_CONTROL_DEFAULT_SET_PPI_CHANNEL,      \
+        .ppi_ch_id_clr = NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL,      \
     })
 
 /**

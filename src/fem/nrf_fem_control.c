@@ -49,21 +49,24 @@
 #include "nrf_radio.h"
 #include "nrf_timer.h"
 
-
 #if ENABLE_FEM
 
-#define PPI_INVALID_CHANNEL       0xFF                                               /**< Default value for the PPI holder variable. */
+#define PPI_INVALID_CHANNEL 0xFF                                           /**< Default value for the PPI holder variable. */
 
-static nrf_fem_interface_config_t m_nrf_fem_interface_config;                        /**< FEM controller configuration. */
-static uint8_t                    m_ppi_channel_ext           = PPI_INVALID_CHANNEL; /**< PPI channel provided by the `override_ppi = true` functionality. */
+static nrf_fem_interface_config_t m_nrf_fem_interface_config;              /**< FEM controller configuration. */
+static uint8_t                    m_ppi_channel_ext = PPI_INVALID_CHANNEL; /**< PPI channel provided by the `override_ppi = true` functionality. */
 
 /** Map the mask bits with the Compare Channels. */
 static uint32_t get_first_available_compare_channel(uint8_t mask)
 {
-    if (mask & (1 << 0)) return NRF_TIMER_CC_CHANNEL0;
-    if (mask & (1 << 1)) return NRF_TIMER_CC_CHANNEL1;
-    if (mask & (1 << 2)) return NRF_TIMER_CC_CHANNEL2;
-    if (mask & (1 << 3)) return NRF_TIMER_CC_CHANNEL3;
+    if (mask & (1 << 0))
+        return NRF_TIMER_CC_CHANNEL0;
+    if (mask & (1 << 1))
+        return NRF_TIMER_CC_CHANNEL1;
+    if (mask & (1 << 2))
+        return NRF_TIMER_CC_CHANNEL2;
+    if (mask & (1 << 3))
+        return NRF_TIMER_CC_CHANNEL3;
     assert(false);
 }
 
@@ -92,10 +95,10 @@ static void gpiote_configure(void)
 }
 
 /** Configure the event with the provided values. */
-static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_event, 
-                                       nrf_fem_gpiote_pin_config_t  * p_pin_config,
-                                       bool                           activate,
-                                       uint32_t                       time_delay)
+static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_event,
+                                       nrf_fem_gpiote_pin_config_t        * p_pin_config,
+                                       bool                                 activate,
+                                       uint32_t                             time_delay)
 {
     uint32_t          task_addr;
     nrf_ppi_channel_t ppi_ch;
@@ -111,7 +114,8 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
             /* External PPI channel placeholder is free. */
             m_ppi_channel_ext = ppi_ch = p_event->ppi_ch_id;
         }
-        else if ((m_ppi_channel_ext == p_event->ppi_ch_id) && (!NRF_PPI->FORK[(uint32_t)m_ppi_channel_ext].TEP))
+        else if ((m_ppi_channel_ext == p_event->ppi_ch_id) &&
+                 (!NRF_PPI->FORK[(uint32_t)m_ppi_channel_ext].TEP))
         {
             /* PPI is equal to the already set, but the one set has a free fork endpoint. */
             ppi_ch = p_event->ppi_ch_id;
@@ -123,7 +127,9 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
     }
     else
     {
-        ppi_ch = activate ? m_nrf_fem_interface_config.ppi_ch_id_set : m_nrf_fem_interface_config.ppi_ch_id_clr;
+        ppi_ch =
+            activate ? m_nrf_fem_interface_config.ppi_ch_id_set : m_nrf_fem_interface_config.
+            ppi_ch_id_clr;
     }
 
     if (p_pin_config->active_high ^ activate)
@@ -144,7 +150,9 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
             }
             else
             {
-                nrf_ppi_channel_endpoint_setup(ppi_ch, p_event->event.generic.register_address, task_addr);
+                nrf_ppi_channel_endpoint_setup(ppi_ch,
+                                               p_event->event.generic.register_address,
+                                               task_addr);
             }
 
             nrf_ppi_channel_enable(ppi_ch);
@@ -153,10 +161,12 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
         case NRF_802154_FAL_EVENT_TYPE_TIMER:
             assert(p_event->event.timer.compare_channel_mask);
 
-            uint32_t compare_channel = get_first_available_compare_channel(p_event->event.timer.compare_channel_mask);
-            
+            uint32_t compare_channel = get_first_available_compare_channel(
+                p_event->event.timer.compare_channel_mask);
+
             nrf_ppi_channel_endpoint_setup(ppi_ch,
-                                           (uint32_t)(&(p_event->event.timer.p_timer_instance->EVENTS_COMPARE[compare_channel])),
+                                           (uint32_t)(&(p_event->event.timer.p_timer_instance->
+                                                        EVENTS_COMPARE[compare_channel])),
                                            task_addr);
             nrf_ppi_channel_enable(ppi_ch);
 
@@ -174,7 +184,8 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
 }
 
 /** Deconfigure the event with the provided values. */
-static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_event, bool activate)
+static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_event,
+                                         bool                                 activate)
 {
     nrf_ppi_channel_t ppi_ch;
 
@@ -186,13 +197,15 @@ static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_
     }
     else
     {
-        ppi_ch = activate ? m_nrf_fem_interface_config.ppi_ch_id_set : m_nrf_fem_interface_config.ppi_ch_id_clr;
+        ppi_ch =
+            activate ? m_nrf_fem_interface_config.ppi_ch_id_set : m_nrf_fem_interface_config.
+            ppi_ch_id_clr;
     }
-    
+
     nrf_ppi_channel_disable(ppi_ch);
     nrf_ppi_channel_endpoint_setup(ppi_ch, 0, 0);
     nrf_ppi_fork_endpoint_setup(ppi_ch, 0);
-    
+
     switch (p_event->type)
     {
         case NRF_802154_FAL_EVENT_TYPE_EVENT:
@@ -208,7 +221,6 @@ static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_
 
     return NRF_SUCCESS;
 }
-
 
 int32_t nrf_802154_fal_pa_configuration_set(const nrf_802154_fal_event_t * const p_activate_event,
                                             const nrf_802154_fal_event_t * const p_deactivate_event)
@@ -243,7 +255,7 @@ int32_t nrf_802154_fal_pa_configuration_set(const nrf_802154_fal_event_t * const
             return ret_code;
         }
     }
-    
+
     return NRF_SUCCESS;
 }
 
@@ -259,7 +271,7 @@ int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * cons
 
     if (p_activate_event)
     {
-        ret_code = event_configuration_set(p_activate_event, 
+        ret_code = event_configuration_set(p_activate_event,
                                            &m_nrf_fem_interface_config.lna_pin_config,
                                            true,
                                            m_nrf_fem_interface_config.fem_config.lna_time_gap_us);
@@ -311,12 +323,13 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
             return ret_code;
         }
     }
-    
+
     return NRF_SUCCESS;
 }
 
-int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
-                                               const nrf_802154_fal_event_t * const p_deactivate_event)
+int32_t nrf_802154_fal_lna_configuration_clear(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event)
 {
     int32_t ret_code;
 
@@ -352,11 +365,13 @@ void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type)
     {
         if (m_nrf_fem_interface_config.pa_pin_config.active_high)
         {
-            nrf_gpiote_task_force(m_nrf_fem_interface_config.pa_pin_config.gpiote_ch_id, NRF_GPIOTE_INITIAL_VALUE_LOW);
+            nrf_gpiote_task_force(m_nrf_fem_interface_config.pa_pin_config.gpiote_ch_id,
+                                  NRF_GPIOTE_INITIAL_VALUE_LOW);
         }
         else
         {
-            nrf_gpiote_task_force(m_nrf_fem_interface_config.pa_pin_config.gpiote_ch_id, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+            nrf_gpiote_task_force(m_nrf_fem_interface_config.pa_pin_config.gpiote_ch_id,
+                                  NRF_GPIOTE_INITIAL_VALUE_HIGH);
         }
     }
 
@@ -364,11 +379,13 @@ void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type)
     {
         if (m_nrf_fem_interface_config.lna_pin_config.active_high)
         {
-            nrf_gpiote_task_force(m_nrf_fem_interface_config.lna_pin_config.gpiote_ch_id, NRF_GPIOTE_INITIAL_VALUE_LOW);
+            nrf_gpiote_task_force(m_nrf_fem_interface_config.lna_pin_config.gpiote_ch_id,
+                                  NRF_GPIOTE_INITIAL_VALUE_LOW);
         }
         else
         {
-            nrf_gpiote_task_force(m_nrf_fem_interface_config.lna_pin_config.gpiote_ch_id, NRF_GPIOTE_INITIAL_VALUE_HIGH);
+            nrf_gpiote_task_force(m_nrf_fem_interface_config.lna_pin_config.gpiote_ch_id,
+                                  NRF_GPIOTE_INITIAL_VALUE_HIGH);
         }
     }
 }
@@ -377,11 +394,12 @@ int32_t nrf_fem_interface_configure(nrf_fem_interface_config_t const * const p_c
 {
     m_nrf_fem_interface_config = *p_config;
 
-    if (m_nrf_fem_interface_config.pa_pin_config.enable || m_nrf_fem_interface_config.lna_pin_config.enable)
+    if (m_nrf_fem_interface_config.pa_pin_config.enable ||
+        m_nrf_fem_interface_config.lna_pin_config.enable)
     {
         gpiote_configure();
     }
-    
+
     return NRF_SUCCESS;
 }
 

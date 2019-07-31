@@ -191,26 +191,39 @@ static uint8_t         m_ed_result;    ///< Result of the current energy detecti
 static volatile radio_state_t m_state; ///< State of the radio driver.
 
 /// Common parameters for the FAL handling.
-static const nrf_802154_fal_event_t m_deactivate_on_disable = {.type = NRF_802154_FAL_EVENT_TYPE_EVENT,
-                                                               .override_ppi = false,
-                                                               .event.generic.register_address = ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_DISABLED)};
+static const nrf_802154_fal_event_t m_deactivate_on_disable =
+{.type         = NRF_802154_FAL_EVENT_TYPE_EVENT,
+ .override_ppi =
+     false,
+ .event.generic.register_address =
+     ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_DISABLED)};
 
-static const nrf_802154_fal_event_t m_activate_rx_cc0       = {.type = NRF_802154_FAL_EVENT_TYPE_TIMER,
-                                                               .override_ppi = false,
-                                                               .event.timer.p_timer_instance = NRF_802154_TIMER_INSTANCE,
-                                                               .event.timer.compare_channel_mask = 1 << NRF_TIMER_CC_CHANNEL0,
-                                                               .event.timer.counter_value = NRF_FEM_RADIO_RX_STARTUP_LATENCY_US};
+static const nrf_802154_fal_event_t m_activate_rx_cc0 =
+{.type                         = NRF_802154_FAL_EVENT_TYPE_TIMER,
+ .override_ppi                 = false,
+ .event.timer.p_timer_instance =
+     NRF_802154_TIMER_INSTANCE,
+ .event.timer.compare_channel_mask = 1 <<
+                                     NRF_TIMER_CC_CHANNEL0,
+        .event.timer.counter_value =
+         NRF_FEM_RADIO_RX_STARTUP_LATENCY_US};
 
-static const nrf_802154_fal_event_t m_activate_tx_cc0       = {.type = NRF_802154_FAL_EVENT_TYPE_TIMER,
-                                                               .override_ppi = false,
-                                                               .event.timer.p_timer_instance = NRF_802154_TIMER_INSTANCE,
-                                                               .event.timer.compare_channel_mask = 1 << NRF_TIMER_CC_CHANNEL0,
-                                                               .event.timer.counter_value = NRF_FEM_RADIO_TX_STARTUP_LATENCY_US};
+static const nrf_802154_fal_event_t m_activate_tx_cc0 =
+{.type                         = NRF_802154_FAL_EVENT_TYPE_TIMER,
+ .override_ppi                 = false,
+ .event.timer.p_timer_instance =
+     NRF_802154_TIMER_INSTANCE,
+ .event.timer.compare_channel_mask = 1 <<
+                                     NRF_TIMER_CC_CHANNEL0,
+        .event.timer.counter_value =
+         NRF_FEM_RADIO_TX_STARTUP_LATENCY_US};
 
-static const nrf_802154_fal_event_t m_ccaidle               = {.type = NRF_802154_FAL_EVENT_TYPE_EVENT,
-                                                               .override_ppi = true,
-                                                               .ppi_ch_id = PPI_CCAIDLE_FEM,
-                                                               .event.generic.register_address = ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_CCAIDLE)};
+static const nrf_802154_fal_event_t m_ccaidle =
+{.type                           = NRF_802154_FAL_EVENT_TYPE_EVENT,
+ .override_ppi                   = true,
+ .ppi_ch_id                      = PPI_CCAIDLE_FEM,
+ .event.generic.register_address =
+     ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_CCAIDLE)};
 
 typedef struct
 {
@@ -811,9 +824,13 @@ static void fem_for_lna_set(void)
 {
     if (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, NULL) == NRF_SUCCESS)
     {
-        uint32_t event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE, EGU_EVENT);
-        uint32_t task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_START);
-        nrf_timer_shorts_enable(m_activate_rx_cc0.event.timer.p_timer_instance, NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
+        uint32_t event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE,
+                                                                  EGU_EVENT);
+        uint32_t task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE,
+                                                                  NRF_TIMER_TASK_START);
+
+        nrf_timer_shorts_enable(m_activate_rx_cc0.event.timer.p_timer_instance,
+                                NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
         nrf_ppi_channel_endpoint_setup(PPI_EGU_TIMER_START, event_addr, task_addr);
         nrf_ppi_channel_enable(PPI_EGU_TIMER_START);
     }
@@ -834,11 +851,15 @@ static void fem_for_lna_reset(void)
 /** Configure FEM to set PA at appropriate time. */
 static void fem_for_pa_set(void)
 {
-    if(nrf_802154_fal_pa_configuration_set(&m_activate_tx_cc0, NULL) == NRF_SUCCESS)
+    if (nrf_802154_fal_pa_configuration_set(&m_activate_tx_cc0, NULL) == NRF_SUCCESS)
     {
-        uint32_t event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE, EGU_EVENT);
-        uint32_t task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_START);
-        nrf_timer_shorts_enable(m_activate_tx_cc0.event.timer.p_timer_instance, NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
+        uint32_t event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE,
+                                                                  EGU_EVENT);
+        uint32_t task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE,
+                                                                  NRF_TIMER_TASK_START);
+
+        nrf_timer_shorts_enable(m_activate_tx_cc0.event.timer.p_timer_instance,
+                                NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
         nrf_ppi_channel_endpoint_setup(PPI_EGU_TIMER_START, event_addr, task_addr);
         nrf_ppi_channel_enable(PPI_EGU_TIMER_START);
     }
@@ -860,8 +881,10 @@ static void fem_for_tx_set(bool cca)
 
     if (cca)
     {
-        success = ((nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS) &&
-                   (nrf_802154_fal_pa_configuration_set(&m_ccaidle, NULL) == NRF_SUCCESS));
+        success =
+            ((nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0,
+                                                   &m_ccaidle) == NRF_SUCCESS) &&
+             (nrf_802154_fal_pa_configuration_set(&m_ccaidle, NULL) == NRF_SUCCESS));
     }
     else
     {
@@ -872,9 +895,11 @@ static void fem_for_tx_set(bool cca)
     {
         nrf_timer_shorts_enable(NRF_802154_TIMER_INSTANCE, NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
 
-        uint32_t egu_event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE, EGU_EVENT);
-        uint32_t timer_task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_START);
-        
+        uint32_t egu_event_addr = (uint32_t)nrf_egu_event_address_get(NRF_802154_SWI_EGU_INSTANCE,
+                                                                      EGU_EVENT);
+        uint32_t timer_task_addr = (uint32_t)nrf_timer_task_address_get(NRF_802154_TIMER_INSTANCE,
+                                                                        NRF_TIMER_TASK_START);
+
         nrf_ppi_channel_endpoint_setup(PPI_EGU_TIMER_START, egu_event_addr, timer_task_addr);
         nrf_ppi_channel_enable(PPI_EGU_TIMER_START);
     }
@@ -884,7 +909,9 @@ static void fem_for_tx_set(bool cca)
 static void fem_for_tx_reset(bool disable_ppi_egu_timer_start)
 {
     nrf_timer_task_trigger(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
-    nrf_timer_shorts_disable(NRF_802154_TIMER_INSTANCE, NRF_TIMER_SHORT_COMPARE0_STOP_MASK | NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
+    nrf_timer_shorts_disable(NRF_802154_TIMER_INSTANCE,
+                             NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
+                             NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
 
     switch (m_state)
     {
@@ -1404,8 +1431,8 @@ static void falling_asleep_init(void)
 /** Initialize RX operation. */
 static void rx_init(bool disabled_was_triggered)
 {
-    bool     free_buffer;
-    int32_t  ints_to_enable = 0;
+    bool    free_buffer;
+    int32_t ints_to_enable = 0;
 
     if (!timeslot_is_granted())
     {
@@ -1453,6 +1480,7 @@ static void rx_init(bool disabled_was_triggered)
                             NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
 
     uint32_t delta_time;
+
     if (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, NULL) == NRF_SUCCESS)
     {
         delta_time = nrf_timer_cc_read(NRF_802154_TIMER_INSTANCE,
@@ -2088,9 +2116,11 @@ static void irq_crcok_state_rx(void)
 #endif // !NRF_802154_DISABLE_BCC_MATCHING
 
             // Set FEM PPIs
-            uint32_t time_to_lna = nrf_timer_cc_read(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL1);
+            uint32_t time_to_lna = nrf_timer_cc_read(NRF_802154_TIMER_INSTANCE,
+                                                     NRF_TIMER_CC_CHANNEL1);
 
             nrf_802154_fal_event_t timer = m_activate_tx_cc0;
+
             timer.event.timer.counter_value += time_to_lna;
 
             nrf_802154_fal_pa_configuration_set(&timer, NULL);

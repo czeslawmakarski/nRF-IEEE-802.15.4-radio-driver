@@ -42,31 +42,30 @@ extern "C" {
  */
 typedef struct
 {
-  bool                         enable;         /* Enable toggling for this pin. */
-  bool                         active_high;    /* If true, pin will be active high. Otherwise, pin will be active low. */
-  uint8_t                      gpio_pin;       /* The GPIO pin number for the pin. */
-  uint8_t                      gpiote_ch_id;   /* GPIOTE channel to be used for toggling pins. */
+    bool    enable;       /* Enable toggling for this pin. */
+    bool    active_high;  /* If true, pin will be active high. Otherwise, pin will be active low. */
+    uint8_t gpio_pin;     /* The GPIO pin number for the pin. */
+    uint8_t gpiote_ch_id; /* GPIOTE channel to be used for toggling pins. */
 } nrf_fem_gpiote_pin_config_t;
-
 
 /**
  * @brief Configuration parameters for the PA/LNA interface.
  */
 typedef struct
 {
-  struct
-  {
-    uint32_t                      pa_time_gap_us;    /* The time between activating the PA pin and radio transmission is started. */
-    uint32_t                      lna_time_gap_us;   /* The time between activating the LNA pin and radio reception is started. */
-    int8_t                        pa_gain_db;        /* Configurable PA gain, ignored if the amplifier is not supporting this. */
-    int8_t                        lna_gain_db;       /* Configurable LNA gain, ignored if the amplifier is not supporting this. */
-  } fem_config;
+    struct
+    {
+        uint32_t pa_time_gap_us;                /* The time between activating the PA pin and radio transmission is started. */
+        uint32_t lna_time_gap_us;               /* The time between activating the LNA pin and radio reception is started. */
+        int8_t   pa_gain_db;                    /* Configurable PA gain, ignored if the amplifier is not supporting this. */
+        int8_t   lna_gain_db;                   /* Configurable LNA gain, ignored if the amplifier is not supporting this. */
+    }                           fem_config;
 
-  nrf_fem_gpiote_pin_config_t pa_pin_config;         /* Power Amplifier pin configuration. */
-  nrf_fem_gpiote_pin_config_t lna_pin_config;        /* Low Noise Amplifier pin configuration. */
+    nrf_fem_gpiote_pin_config_t pa_pin_config;  /* Power Amplifier pin configuration. */
+    nrf_fem_gpiote_pin_config_t lna_pin_config; /* Low Noise Amplifier pin configuration. */
 
-  nrf_ppi_channel_t ppi_ch_id_set;                   /* PPI channel to be used for setting pins. */
-  nrf_ppi_channel_t ppi_ch_id_clr;                   /* PPI channel to be used for clearing pins. */
+    nrf_ppi_channel_t           ppi_ch_id_set;  /* PPI channel to be used for setting pins. */
+    nrf_ppi_channel_t           ppi_ch_id_clr;  /* PPI channel to be used for clearing pins. */
 } nrf_fem_interface_config_t;
 
 /**

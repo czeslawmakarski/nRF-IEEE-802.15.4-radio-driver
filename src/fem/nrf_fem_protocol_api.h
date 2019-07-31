@@ -28,7 +28,6 @@
  *
  */
 
-
 /**
  * @brief Protocol interface for Power Amplifier (PA) and Low Noise Amplifier (LNA) module.
  *
@@ -55,9 +54,9 @@
 
 typedef enum
 {
-  NRF_802154_FAL_PA  = 1 << 0,
-  NRF_802154_FAL_LNA = 1 << 1,
-  NRF_802154_FAL_ALL = NRF_802154_FAL_PA | NRF_802154_FAL_LNA
+    NRF_802154_FAL_PA  = 1 << 0,
+    NRF_802154_FAL_LNA = 1 << 1,
+    NRF_802154_FAL_ALL = NRF_802154_FAL_PA | NRF_802154_FAL_LNA
 } nrf_fal_functionality_t;
 
 /**
@@ -65,9 +64,9 @@ typedef enum
  */
 typedef enum
 {
-  NRF_802154_FAL_EVENT_TYPE_TIMER,
-  NRF_802154_FAL_EVENT_TYPE_EVENT,
-  NRF_802154_FAL_EVENT_TYPE_PPI,
+    NRF_802154_FAL_EVENT_TYPE_TIMER,
+    NRF_802154_FAL_EVENT_TYPE_EVENT,
+    NRF_802154_FAL_EVENT_TYPE_PPI,
 } nrf_802154_fal_event_type_t;
 
 /**
@@ -78,28 +77,29 @@ typedef enum
  */
 typedef struct
 {
-  union
-  {
-    struct
+    union
     {
-      NRF_TIMER_Type * p_timer_instance;      /* Pointer to a 1 us resolution timer instance. */
-      uint32_t         counter_value;         /* Timer value when radio activity starts. */
-      uint8_t          compare_channel_mask;  /* Mask of compare channels which may be used by the FEM to schedule its own tasks. */
-    } timer;
-    struct
-    {
-      uint32_t register_address;              /* Address of event register. */
-    } generic;
-    struct
-    {
-      uint8_t ch_id;                          /* Number of the PPI which was provided. */
-    } ppi;
-  } event;
-  bool                        override_ppi;   /* False to ignore PPI channel below and use the one set by application. True to use the PPI channel below. */
-  nrf_ppi_channel_t           ppi_ch_id;      /* PPI channel to be used for this event. */
-  nrf_802154_fal_event_type_t type;           /* Type of event source. */
+        struct
+        {
+            NRF_TIMER_Type * p_timer_instance;     /* Pointer to a 1 us resolution timer instance. */
+            uint32_t         counter_value;        /* Timer value when radio activity starts. */
+            uint8_t          compare_channel_mask; /* Mask of compare channels which may be used by the FEM to schedule its own tasks. */
+        } timer;
+        struct
+        {
+            uint32_t register_address; /* Address of event register. */
+        } generic;
+        struct
+        {
+            uint8_t ch_id;                    /* Number of the PPI which was provided. */
+        } ppi;
+    }                           event;
+    bool                        override_ppi; /* False to ignore PPI channel below and use the one set by application. True to use the PPI channel below. */
+    nrf_ppi_channel_t           ppi_ch_id;    /* PPI channel to be used for this event. */
+    nrf_802154_fal_event_type_t type;         /* Type of event source. */
 } nrf_802154_fal_event_t;
 
+#if ENABLE_FEM
 
 /**
  * @brief Set up PA using the provided events for the upcoming radio transmission.
@@ -123,7 +123,7 @@ typedef struct
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
  *
  * @note If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.
- * 
+ *
  * @retval   ::NRF_SUCCESS               PA activate setup is successful.
  * @retval   ::NRF_ERROR_INVALID_STATE   PA activate setup could not be performed due to invalid or missing configuration parameters
  *                                       in p_activate_event or/and p_deactivate_event.
@@ -164,7 +164,7 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
  * @pre To activate LNA it is required that nrf_fem_interface_configure() has been called first.
  *
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
- * 
+ *
  * @note If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.
  *
  * @retval   ::NRF_SUCCESS               LNA activate setup is successful.
@@ -184,9 +184,9 @@ int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * cons
  * @retval   ::NRF_ERROR_INVALID_STATE   LNA activate setup purge could not be performed due to invalid or missing configuration parameters
  *                                       in p_activate_event or/and p_deactivate_event.
  */
-int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
-                                               const nrf_802154_fal_event_t * const p_deactivate_event);
-
+int32_t nrf_802154_fal_lna_configuration_clear(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event);
 
 /**
  * @brief Deactivate PA/LNA now.
@@ -194,14 +194,12 @@ int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * co
  */
 void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type);
 
-
 /**
  * @brief Clean up the configured PA/LNA timer/radio instance, PPI and GPIOTE resources.
  * The function resets the hardware that is set up for PA/LNA activation. PA and LNA module control configuration parameters are not deleted.
  * The function is intended to be called after the radio disable signal.
  */
 void nrf_802154_fal_cleanup(void);
-
 
 /**
  * @brief Check if PA signaling is configured and enabled, and get the configured gain in dB.
@@ -212,9 +210,60 @@ void nrf_802154_fal_cleanup(void);
  */
 void nrf_802154_fal_pa_is_configured(int8_t * const p_gain);
 
+#else // ENABLE_FEM
+
+static inline int32_t nrf_802154_fal_pa_configuration_set(const nrf_802154_fal_event_t * const p_activate_event,
+                                                          const nrf_802154_fal_event_t * const p_deactivate_event)
+{
+    (void)p_activate_event;
+    (void)p_deactivate_event;
+    return NRF_ERROR_NOT_SUPPORTED;
+}
+
+static inline int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
+                                                            const nrf_802154_fal_event_t * const p_deactivate_event)
+{
+    (void)p_activate_event;
+    (void)p_deactivate_event;
+    return NRF_ERROR_NOT_SUPPORTED;
+}
+
+static inline int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * const p_activate_event,
+                                                           const nrf_802154_fal_event_t * const p_deactivate_event)
+{
+    (void)p_activate_event;
+    (void)p_deactivate_event;
+    return NRF_ERROR_NOT_SUPPORTED;
+}
+
+static inline int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
+                                                             const nrf_802154_fal_event_t * const p_deactivate_event)
+{
+    (void)p_activate_event;
+    (void)p_deactivate_event;
+    return NRF_ERROR_NOT_SUPPORTED;   
+}
+
+static inline void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type)
+{
+    (void)type;
+}
+
+static inline void nrf_802154_fal_cleanup(void)
+{
+
+}
+
+static inline void nrf_802154_fal_pa_is_configured(int8_t * const p_gain)
+{
+    (void)p_gain;
+}
+
+#endif // ENABLE_FEM
+
 #endif // NRF_FEM_PROTOCOL_API_H__
 
 /**
-  @}
-  @}
+   @}
+   @}
  */
