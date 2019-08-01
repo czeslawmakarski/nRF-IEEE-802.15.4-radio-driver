@@ -95,7 +95,7 @@ typedef struct
         } ppi;
     }                           event;
     bool                        override_ppi; /* False to ignore PPI channel below and use the one set by application. True to use the PPI channel below. */
-    nrf_ppi_channel_t           ppi_ch_id;    /* PPI channel to be used for this event. */
+    uint8_t                     ppi_ch_id;    /* PPI channel to be used for this event. */
     nrf_802154_fal_event_type_t type;         /* Type of event source. */
 } nrf_802154_fal_event_t;
 

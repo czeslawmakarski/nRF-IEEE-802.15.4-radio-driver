@@ -64,8 +64,8 @@ typedef struct
     nrf_fem_gpiote_pin_config_t pa_pin_config;  /* Power Amplifier pin configuration. */
     nrf_fem_gpiote_pin_config_t lna_pin_config; /* Low Noise Amplifier pin configuration. */
 
-    nrf_ppi_channel_t           ppi_ch_id_set;  /* PPI channel to be used for setting pins. */
-    nrf_ppi_channel_t           ppi_ch_id_clr;  /* PPI channel to be used for clearing pins. */
+    int                         ppi_ch_id_set;  /* PPI channel to be used for setting pins. */
+    int                         ppi_ch_id_clr;  /* PPI channel to be used for clearing pins. */
 } nrf_fem_interface_config_t;
 
 /**
