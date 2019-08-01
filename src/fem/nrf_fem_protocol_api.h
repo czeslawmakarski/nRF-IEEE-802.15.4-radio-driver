@@ -212,36 +212,40 @@ void nrf_802154_fal_pa_is_configured(int8_t * const p_gain);
 
 #else // ENABLE_FEM
 
-static inline int32_t nrf_802154_fal_pa_configuration_set(const nrf_802154_fal_event_t * const p_activate_event,
-                                                          const nrf_802154_fal_event_t * const p_deactivate_event)
+static inline int32_t nrf_802154_fal_pa_configuration_set(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event)
 {
     (void)p_activate_event;
     (void)p_deactivate_event;
     return NRF_ERROR_NOT_SUPPORTED;
 }
 
-static inline int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
-                                                            const nrf_802154_fal_event_t * const p_deactivate_event)
+static inline int32_t nrf_802154_fal_pa_configuration_clear(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event)
 {
     (void)p_activate_event;
     (void)p_deactivate_event;
     return NRF_ERROR_NOT_SUPPORTED;
 }
 
-static inline int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * const p_activate_event,
-                                                           const nrf_802154_fal_event_t * const p_deactivate_event)
+static inline int32_t nrf_802154_fal_lna_configuration_set(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event)
 {
     (void)p_activate_event;
     (void)p_deactivate_event;
     return NRF_ERROR_NOT_SUPPORTED;
 }
 
-static inline int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
-                                                             const nrf_802154_fal_event_t * const p_deactivate_event)
+static inline int32_t nrf_802154_fal_lna_configuration_clear(
+    const nrf_802154_fal_event_t * const p_activate_event,
+    const nrf_802154_fal_event_t * const p_deactivate_event)
 {
     (void)p_activate_event;
     (void)p_deactivate_event;
-    return NRF_ERROR_NOT_SUPPORTED;   
+    return NRF_ERROR_NOT_SUPPORTED;
 }
 
 static inline void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type)

@@ -145,40 +145,40 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
     switch (p_event->type)
     {
         case NRF_802154_FAL_EVENT_TYPE_EVENT:
+        {
+            if (NRF_PPI->CH[(uint32_t)ppi_ch].TEP)
             {
-                if (NRF_PPI->CH[(uint32_t)ppi_ch].TEP)
-                {
-                    nrf_ppi_fork_endpoint_setup((nrf_ppi_channel_t)ppi_ch, task_addr);
-                }
-                else
-                {
-                    nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)ppi_ch,
-                                                p_event->event.generic.register_address,
-                                                task_addr);
-                }
-
-                nrf_ppi_channel_enable((nrf_ppi_channel_t)ppi_ch);
+                nrf_ppi_fork_endpoint_setup((nrf_ppi_channel_t)ppi_ch, task_addr);
             }
-            break;
+            else
+            {
+                nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)ppi_ch,
+                                               p_event->event.generic.register_address,
+                                               task_addr);
+            }
+
+            nrf_ppi_channel_enable((nrf_ppi_channel_t)ppi_ch);
+        }
+        break;
 
         case NRF_802154_FAL_EVENT_TYPE_TIMER:
-            {
-                assert(p_event->event.timer.compare_channel_mask);
+        {
+            assert(p_event->event.timer.compare_channel_mask);
 
-                uint32_t compare_channel = get_first_available_compare_channel(
-                    p_event->event.timer.compare_channel_mask);
+            uint32_t compare_channel = get_first_available_compare_channel(
+                p_event->event.timer.compare_channel_mask);
 
-                nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)ppi_ch,
-                                            (uint32_t)(&(p_event->event.timer.p_timer_instance->
-                                                            EVENTS_COMPARE[compare_channel])),
-                                            task_addr);
-                nrf_ppi_channel_enable((nrf_ppi_channel_t)ppi_ch);
+            nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)ppi_ch,
+                                           (uint32_t)(&(p_event->event.timer.p_timer_instance->
+                                                        EVENTS_COMPARE[compare_channel])),
+                                           task_addr);
+            nrf_ppi_channel_enable((nrf_ppi_channel_t)ppi_ch);
 
-                nrf_timer_cc_write(p_event->event.timer.p_timer_instance,
-                                (nrf_timer_cc_channel_t)compare_channel,
-                                p_event->event.timer.counter_value - time_delay);
-            }
-            break;
+            nrf_timer_cc_write(p_event->event.timer.p_timer_instance,
+                               (nrf_timer_cc_channel_t)compare_channel,
+                               p_event->event.timer.counter_value - time_delay);
+        }
+        break;
 
         default:
             assert(false);
@@ -411,10 +411,12 @@ int32_t nrf_fem_interface_configure(nrf_fem_interface_config_t const * const p_c
 void nrf_802154_fal_cleanup(void)
 {
     nrf_ppi_channel_disable((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_set);
-    nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_set, 0, 0);
+    nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_set, 0,
+                                   0);
     nrf_ppi_fork_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_set, 0);
     nrf_ppi_channel_disable((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_clr);
-    nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_clr, 0, 0);
+    nrf_ppi_channel_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_clr, 0,
+                                   0);
     nrf_ppi_fork_endpoint_setup((nrf_ppi_channel_t)m_nrf_fem_interface_config.ppi_ch_id_clr, 0);
     if (m_ppi_channel_ext != PPI_INVALID_CHANNEL)
     {

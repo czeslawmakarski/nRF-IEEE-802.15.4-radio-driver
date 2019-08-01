@@ -883,7 +883,8 @@ static void fem_for_tx_set(bool cca)
     {
         success = true;
 
-        success &= (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS);
+        success &=
+            (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS);
         success &= (nrf_802154_fal_pa_configuration_set(&m_ccaidle, NULL) == NRF_SUCCESS);
     }
     else
@@ -2117,7 +2118,7 @@ static void irq_crcok_state_rx(void)
 
             // Set FEM PPIs
             uint32_t time_to_pa = nrf_timer_cc_read(NRF_802154_TIMER_INSTANCE,
-                                                     NRF_TIMER_CC_CHANNEL1);
+                                                    NRF_TIMER_CC_CHANNEL1);
 
             nrf_802154_fal_event_t timer = m_activate_tx_cc0;
 
