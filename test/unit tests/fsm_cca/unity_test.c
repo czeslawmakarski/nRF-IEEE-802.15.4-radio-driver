@@ -47,7 +47,7 @@
 #include "mock_nrf_802154_rsch.h"
 #include "mock_nrf_802154_rx_buffer.h"
 #include "mock_nrf_802154_timer_coord.h"
-#include "mock_nrf_fem_control_api.h"
+#include "mock_nrf_fem_protocol_api.h"
 #include "mock_nrf_radio.h"
 #include "mock_nrf_timer.h"
 #include "mock_nrf_egu.h"
