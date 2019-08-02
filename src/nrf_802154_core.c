@@ -196,7 +196,7 @@ static const nrf_802154_fal_event_t m_deactivate_on_disable =
  .override_ppi =
      false,
  .event.generic.register_address =
-     ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_DISABLED)};
+     ((uint32_t)NRF_RADIO_BASE + (uint32_t)NRF_RADIO_EVENT_DISABLED)};
 
 static const nrf_802154_fal_event_t m_activate_rx_cc0 =
 {.type                         = NRF_802154_FAL_EVENT_TYPE_TIMER,
@@ -223,7 +223,7 @@ static const nrf_802154_fal_event_t m_ccaidle =
  .override_ppi                   = true,
  .ppi_ch_id                      = PPI_CCAIDLE_FEM,
  .event.generic.register_address =
-     ((uint32_t)NRF_RADIO + (uint32_t)NRF_RADIO_EVENT_CCAIDLE)};
+     ((uint32_t)NRF_RADIO_BASE + (uint32_t)NRF_RADIO_EVENT_CCAIDLE)};
 
 typedef struct
 {
