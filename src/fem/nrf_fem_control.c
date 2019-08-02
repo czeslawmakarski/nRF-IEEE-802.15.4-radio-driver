@@ -271,7 +271,7 @@ int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * cons
 
     if (!m_nrf_fem_interface_config.lna_pin_config.enable)
     {
-        return NRF_SUCCESS;
+        return NRF_ERROR_FORBIDDEN;
     }
 
     if (p_activate_event)
@@ -308,7 +308,7 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
 
     if (!m_nrf_fem_interface_config.pa_pin_config.enable)
     {
-        return NRF_SUCCESS;
+        return NRF_ERROR_FORBIDDEN;
     }
 
     if (p_activate_event)

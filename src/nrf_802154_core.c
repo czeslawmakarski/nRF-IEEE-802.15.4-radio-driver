@@ -881,11 +881,21 @@ static void fem_for_tx_set(bool cca)
 
     if (cca)
     {
-        success = true;
+        bool pa_set = false;
+        bool lna_set = false;
 
-        success &=
-            (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS);
-        success &= (nrf_802154_fal_pa_configuration_set(&m_ccaidle, NULL) == NRF_SUCCESS);
+        if (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS)
+        {
+            lna_set = true;
+        }
+
+        if (nrf_802154_fal_pa_configuration_set(&m_ccaidle, NULL) == NRF_SUCCESS)
+        {
+            pa_set = true;
+        }
+
+        success = pa_set || lna_set;
+
     }
     else
     {
