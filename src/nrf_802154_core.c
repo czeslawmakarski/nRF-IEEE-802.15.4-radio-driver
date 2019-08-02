@@ -1500,6 +1500,7 @@ static void rx_init(bool disabled_was_triggered)
     else
     {
         delta_time = 1;
+        nrf_timer_cc_write(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, delta_time);
     }
 
     nrf_timer_cc_write(NRF_802154_TIMER_INSTANCE,
