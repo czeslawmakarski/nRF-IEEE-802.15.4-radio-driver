@@ -881,7 +881,7 @@ static void fem_for_tx_set(bool cca)
 
     if (cca)
     {
-        bool pa_set = false;
+        bool pa_set  = false;
         bool lna_set = false;
 
         if (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, &m_ccaidle) == NRF_SUCCESS)
