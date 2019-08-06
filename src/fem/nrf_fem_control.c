@@ -144,7 +144,7 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
 
     switch (p_event->type)
     {
-        case NRF_802154_FAL_EVENT_TYPE_EVENT:
+        case NRF_802154_FAL_EVENT_TYPE_GENERIC:
         {
             if (NRF_PPI->CH[(uint32_t)ppi_ch].TEP)
             {
@@ -213,7 +213,7 @@ static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_
 
     switch (p_event->type)
     {
-        case NRF_802154_FAL_EVENT_TYPE_EVENT:
+        case NRF_802154_FAL_EVENT_TYPE_GENERIC:
             break;
 
         case NRF_802154_FAL_EVENT_TYPE_TIMER:

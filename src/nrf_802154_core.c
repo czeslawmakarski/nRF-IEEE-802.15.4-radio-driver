@@ -192,7 +192,7 @@ static volatile radio_state_t m_state; ///< State of the radio driver.
 
 /// Common parameters for the FAL handling.
 static const nrf_802154_fal_event_t m_deactivate_on_disable =
-{.type         = NRF_802154_FAL_EVENT_TYPE_EVENT,
+{.type         = NRF_802154_FAL_EVENT_TYPE_GENERIC,
  .override_ppi =
      false,
  .event.generic.register_address =
@@ -219,7 +219,7 @@ static const nrf_802154_fal_event_t m_activate_tx_cc0 =
          NRF_FEM_RADIO_TX_STARTUP_LATENCY_US};
 
 static const nrf_802154_fal_event_t m_ccaidle =
-{.type                           = NRF_802154_FAL_EVENT_TYPE_EVENT,
+{.type                           = NRF_802154_FAL_EVENT_TYPE_GENERIC,
  .override_ppi                   = true,
  .ppi_ch_id                      = PPI_CCAIDLE_FEM,
  .event.generic.register_address =

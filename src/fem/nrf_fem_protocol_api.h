@@ -65,7 +65,7 @@ typedef enum
 typedef enum
 {
     NRF_802154_FAL_EVENT_TYPE_TIMER,
-    NRF_802154_FAL_EVENT_TYPE_EVENT,
+    NRF_802154_FAL_EVENT_TYPE_GENERIC,
     NRF_802154_FAL_EVENT_TYPE_PPI,
 } nrf_802154_fal_event_type_t;
 
@@ -133,7 +133,7 @@ int32_t nrf_802154_fal_pa_configuration_set(const nrf_802154_fal_event_t * const
                                             const nrf_802154_fal_event_t * const p_deactivate_event);
 
 /**
- * @brief Functions clears up the configuration provided by the its `_set` counterpart.
+ * @brief Functions clears up the configuration provided by the @ref nrf_802154_fal_pa_configuration_set function.
  *
  * @param[in] p_activate_event   Pointer to the activation event structure.
  * @param[in] p_deactivate_event Pointer to the deactivation event structure.
@@ -177,7 +177,7 @@ int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * cons
                                              const nrf_802154_fal_event_t * const p_deactivate_event);
 
 /**
- * @brief Functions clears up the configuration provided by the its `_set` counterpart.
+ * @brief Functions clears up the configuration provided by the @ref nrf_802154_fal_lna_configuration_set function.
  *
  * @param[in] p_activate_event   Pointer to the activation event structure.
  * @param[in] p_deactivate_event Pointer to the deactivation event structure.
@@ -262,7 +262,7 @@ static inline void nrf_802154_fal_cleanup(void)
 
 static inline void nrf_802154_fal_pa_is_configured(int8_t * const p_gain)
 {
-    (void)p_gain;
+    *p_gain = 0;
 }
 
 #endif // ENABLE_FEM

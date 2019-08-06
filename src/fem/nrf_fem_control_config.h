@@ -31,7 +31,8 @@
 #ifndef NRF_FEM_CONTROL_CONFIG_H_
 #define NRF_FEM_CONTROL_CONFIG_H_
 
-#include "nrf_ppi.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
