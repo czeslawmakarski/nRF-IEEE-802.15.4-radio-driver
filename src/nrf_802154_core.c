@@ -2868,9 +2868,9 @@ void nrf_802154_core_deinit(void)
     if (timeslot_is_granted())
     {
         nrf_radio_reset();
+        nrf_802154_fal_deactivate_now(NRF_802154_FAL_ALL);
     }
 
-    nrf_802154_fal_deactivate_now(NRF_802154_FAL_ALL);
     nrf_802154_fal_cleanup();
 
     irq_deinit();
