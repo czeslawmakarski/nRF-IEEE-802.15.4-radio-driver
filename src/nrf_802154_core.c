@@ -940,7 +940,6 @@ static void fem_for_tx_reset(bool disable_ppi_egu_timer_start)
     }
 
     nrf_timer_task_trigger(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
-    nrf_802154_fal_deactivate_now(NRF_802154_FAL_ALL);
 
     if (disable_ppi_egu_timer_start)
     {
