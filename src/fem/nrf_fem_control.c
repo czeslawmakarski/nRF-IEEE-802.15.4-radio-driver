@@ -129,8 +129,8 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
     else
     {
         ppi_ch =
-            activate ? m_nrf_fem_interface_config.ppi_ch_id_set : 
-                       m_nrf_fem_interface_config.ppi_ch_id_clr;
+            activate ? m_nrf_fem_interface_config.ppi_ch_id_set :
+            m_nrf_fem_interface_config.ppi_ch_id_clr;
     }
 
     if (p_pin_config->active_high ^ activate)
