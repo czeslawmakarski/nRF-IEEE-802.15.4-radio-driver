@@ -251,7 +251,6 @@ static void mock_tx_terminate(void)
 
     nrf_802154_fal_pa_configuration_clear_ExpectAndReturn(&m_activate_tx_cc0, NULL, NRF_SUCCESS);
     nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
-    nrf_802154_fal_deactivate_now_Expect(NRF_802154_FAL_ALL);
     nrf_ppi_channel_disable_Expect(PPI_EGU_TIMER_START);    
 
     nrf_ppi_channel_remove_from_group_Expect(PPI_EGU_RAMP_UP, PPI_CHGRP0);
@@ -457,7 +456,6 @@ static void mock_ack_requested_tx(void)
     nrf_802154_fal_pa_configuration_clear_ExpectAndReturn(&m_activate_tx_cc0, NULL, NRF_SUCCESS);
 
     nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
-    nrf_802154_fal_deactivate_now_Expect(NRF_802154_FAL_ALL);
 
     nrf_802154_fal_lna_configuration_set_ExpectAndReturn(&m_activate_rx_cc0, NULL, NRF_SUCCESS);
     event_addr = rand();
