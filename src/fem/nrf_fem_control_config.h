@@ -39,13 +39,13 @@ extern "C" {
 #endif
 
 /**
- * @brief Configuration parameters for pins that enable/disable Power Amplifier (PA) or Low Noise Amplifier (LNA).
+ * @brief Configuration parameters for pins that enable or disable (or both) either Power Amplifier (PA) or Low Noise Amplifier (LNA).
  */
 typedef struct
 {
     bool    enable;       /* Enable toggling for this pin. */
-    bool    active_high;  /* If true, pin will be active high. Otherwise, pin will be active low. */
-    uint8_t gpio_pin;     /* The GPIO pin number for the pin. */
+    bool    active_high;  /* If true, the pin will be active high. Otherwise, the pin will be active low. */
+    uint8_t gpio_pin;     /* GPIO pin number for the pin. */
     uint8_t gpiote_ch_id; /* GPIOTE channel to be used for toggling pins. */
 } nrf_fem_gpiote_pin_config_t;
 
@@ -56,10 +56,10 @@ typedef struct
 {
     struct
     {
-        uint32_t pa_time_gap_us;                /* The time between activating the PA pin and radio transmission is started. */
-        uint32_t lna_time_gap_us;               /* The time between activating the LNA pin and radio reception is started. */
-        int8_t   pa_gain_db;                    /* Configurable PA gain, ignored if the amplifier is not supporting this. */
-        int8_t   lna_gain_db;                   /* Configurable LNA gain, ignored if the amplifier is not supporting this. */
+        uint32_t pa_time_gap_us;                /* Time between the activation of the PA pin and the start of the radio transmission. */
+        uint32_t lna_time_gap_us;               /* Time between the activation of the LNA pin and the start of the radio reception. */
+        int8_t   pa_gain_db;                    /* Configurable PA gain. Ignored if the amplifier is not supporting this feature. */
+        int8_t   lna_gain_db;                   /* Configurable LNA gain. Ignored if the amplifier is not supporting this feature. */
     }                           fem_config;
 
     nrf_fem_gpiote_pin_config_t pa_pin_config;  /* Power Amplifier pin configuration. */

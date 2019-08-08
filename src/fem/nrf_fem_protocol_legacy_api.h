@@ -31,33 +31,33 @@
 #include <stdint.h>
 
 /**
- * @brief Configuration parameters for the PA and LNA.
+ * @brief Configuration parameters for PA and LNA.
  */
 typedef struct
 {
-    uint8_t enable      : 1; /**< Enable toggling for this amplifier */
-    uint8_t active_high : 1; /**< Set the pin to be active high */
-    uint8_t gpio_pin    : 6; /**< The GPIO pin to toggle for this amplifier */
+    uint8_t enable      : 1; /**< Enable toggling for this amplifier. */
+    uint8_t active_high : 1; /**< Set the pin to be active high. */
+    uint8_t gpio_pin    : 6; /**< The GPIO pin to be toggled for this amplifier. */
 } nrf_fem_control_pa_lna_cfg_t;
 
 /**
- * @brief PA & LNA GPIO toggle configuration
+ * @brief PA and LNA GPIO toggle configuration.
  *
  * This option configures the nRF 802.15.4 radio driver to toggle pins when the radio
- * is active for use with a power amplifier and/or a low noise amplifier.
+ * is active and ready for use with a Power Amplifier (PA) or a Low Noise Amplifier (LNA), or both.
  *
- * Toggling the pins is achieved by using two PPI channels and a GPIOTE channel. The hardware channel IDs are provided
- * by the application and should be regarded as reserved as long as any PA/LNA toggling is enabled.
+ * Pins can be toggled by using two PPI channels and a GPIOTE channel. The hardware channel IDs are provided
+ * by the application and are to be regarded as reserved for as long as there is no PA/LNA toggling enabled.
  *
- * @note Changing this configuration while the radio is in use may have undefined
- *       consequences and must be avoided by the application.
+ * @note Avoid changing this configuration while the radio is in use, as this can lead to undefined consequences.
+ *
  */
 typedef struct
 {
-    nrf_fem_control_pa_lna_cfg_t pa_cfg;           /**< Power Amplifier configuration */
-    nrf_fem_control_pa_lna_cfg_t lna_cfg;          /**< Low Noise Amplifier configuration */
-    uint8_t                      pa_gpiote_ch_id;  /**< GPIOTE channel used for Power Amplifier pin toggling */
-    uint8_t                      lna_gpiote_ch_id; /**< GPIOTE channel used for Low Noise Amplifier pin toggling */
-    uint8_t                      ppi_ch_id_set;    /**< PPI channel used for radio Power Amplifier and Low Noise Amplifier pins setting */
-    uint8_t                      ppi_ch_id_clr;    /**< PPI channel used for radio pin clearing */
+    nrf_fem_control_pa_lna_cfg_t pa_cfg;           /**< Power Amplifier configuration. */
+    nrf_fem_control_pa_lna_cfg_t lna_cfg;          /**< Low Noise Amplifier configuration. */
+    uint8_t                      pa_gpiote_ch_id;  /**< GPIOTE channel used for Power Amplifier pin toggling. */
+    uint8_t                      lna_gpiote_ch_id; /**< GPIOTE channel used for Low Noise Amplifier pin toggling. */
+    uint8_t                      ppi_ch_id_set;    /**< PPI channel used for radio Power Amplifier and Low Noise Amplifier pins setting. */
+    uint8_t                      ppi_ch_id_clr;    /**< PPI channel used for radio pin clearing. */
 } nrf_fem_control_cfg_t;
