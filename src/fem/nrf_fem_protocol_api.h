@@ -108,7 +108,7 @@ typedef struct
  * and the configuration is preserved between calls).
  *
  * If a NRF_802154_PA_LNA_EVENT_TYPE_TIMER timer event is provided, the PA will be configured to activate or deactivate at the application-configured time gap
- * before the timer instance reaches the given register_value. The time gap is set via @ref nrf_fem_interface_configure.
+ * before the timer instance reaches the given register_value. The time gap is set via @ref nrf_fem_interface_configuration_set.
  *
  * If a NRF_802154_PA_LNA_EVENT_TYPE_GENERIC event is provided, the PA will be configured to activate or deactivate when an event occurs.
  *
@@ -118,7 +118,7 @@ typedef struct
  * @param[in] p_activate_event   Pointer to the activation event structure.
  * @param[in] p_deactivate_event Pointer to the deactivation event structure.
  *
- * @pre To activate PA, nrf_fem_interface_configure() must have been called first.
+ * @pre To activate PA, nrf_fem_interface_configuration_set() must have been called first.
  *
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
  *       If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.
@@ -151,7 +151,7 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
  * and the configuration is preserved between calls).
  *
  * If a NRF_802154_PA_LNA_EVENT_TYPE_TIMER timer event is provided, the LNA will be configured to activate or deactivate at the application-configured time gap
- * before the timer instance reaches the given register_value. The time gap is set via @ref nrf_fem_interface_configure.
+ * before the timer instance reaches the given register_value. The time gap is set via @ref nrf_fem_interface_configuration_set.
  *
  * If a NRF_802154_PA_LNA_EVENT_TYPE_GENERIC event is provided, the LNA will be configured to activate or deactivate when an event occurs.
  *
@@ -161,7 +161,7 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
  * @param[in] p_activate_event   Pointer to the activation event structure.
  * @param[in] p_deactivate_event Pointer to the deactivation event structure.
  *
- * @pre To activate LNA, nrf_fem_interface_configure() must have been called first.
+ * @pre To activate LNA, nrf_fem_interface_configuration_set() must have been called first.
  *
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
  *       If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.

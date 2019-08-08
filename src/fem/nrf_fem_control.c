@@ -395,7 +395,7 @@ void nrf_802154_fal_deactivate_now(nrf_fal_functionality_t type)
     }
 }
 
-int32_t nrf_fem_interface_configure(nrf_fem_interface_config_t const * const p_config)
+int32_t nrf_fem_interface_configuration_set(nrf_fem_interface_config_t const * const p_config)
 {
     m_nrf_fem_interface_config = *p_config;
 
@@ -404,6 +404,13 @@ int32_t nrf_fem_interface_configure(nrf_fem_interface_config_t const * const p_c
     {
         gpiote_configure();
     }
+
+    return NRF_SUCCESS;
+}
+
+int32_t nrf_fem_interface_configuration_get(nrf_fem_interface_config_t * p_config)
+{
+    *p_config = m_nrf_fem_interface_config;
 
     return NRF_SUCCESS;
 }
