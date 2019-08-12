@@ -121,7 +121,7 @@ typedef struct
  * @pre To activate PA, nrf_fem_interface_configuration_set() must have been called first.
  *
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
- *       If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.
+ *       Moreover, the caller is responsible for stopping the timer no earlier than the provided compare channel expires.
  *
  * @retval   ::NRF_SUCCESS               PA activate setup is successful.
  * @retval   ::NRF_ERROR_FORBIDDEN       PA is currently disabled.
@@ -164,7 +164,7 @@ int32_t nrf_802154_fal_pa_configuration_clear(const nrf_802154_fal_event_t * con
  * @pre To activate LNA, nrf_fem_interface_configuration_set() must have been called first.
  *
  * @note If a timer event is provided, the caller of this function is responsible for starting the timer and its shorts.
- *       If a timer event is provided, the caller of this function is responsible for stopping the timer no earlier than the provided compare channel expires.
+ *       Moreover, the caller is responsible for stopping the timer no earlier than the provided compare channel expires.
  *
  * @retval   ::NRF_SUCCESS               LNA activate setup is successful.
  * @retval   ::NRF_ERROR_FORBIDDEN       LNA is currently disabled.
@@ -204,7 +204,7 @@ void nrf_802154_fal_cleanup(void);
  * @brief Checks if the PA signaling is configured and enabled, and gets the configured gain in dB.
  *
  * @param[out] p_gain The configured gain in dB if PA is configured and enabled.
-                      If there is no PA present or the PA does not affect the signal gain returns 0 dB.
+                      If there is no PA present or the PA does not affect the signal gain, returns 0 dB.
  *
  */
 void nrf_802154_fal_pa_is_configured(int8_t * const p_gain);
