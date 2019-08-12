@@ -244,20 +244,11 @@ void nrf_802154_radio_irq_handler(void)
 #if ENABLE_FEM
 void nrf_802154_fem_control_cfg_set(nrf_802154_fem_control_cfg_t const * const p_cfg)
 {
-    nrf_fem_interface_config_t config = NRF_802154_FAL_DEFAULT_SETTINGS;
+    nrf_fem_interface_config_t config;
+    nrf_fem_interface_configuration_get(&config);
 
-    config.lna_pin_config.active_high  = p_cfg->lna_cfg.active_high;
-    config.lna_pin_config.enable       = p_cfg->lna_cfg.enable;
-    config.lna_pin_config.gpio_pin     = p_cfg->lna_cfg.gpio_pin;
-    config.lna_pin_config.gpiote_ch_id = p_cfg->lna_gpiote_ch_id;
-
-    config.pa_pin_config.active_high  = p_cfg->pa_cfg.active_high;
-    config.pa_pin_config.enable       = p_cfg->pa_cfg.enable;
-    config.pa_pin_config.gpio_pin     = p_cfg->pa_cfg.gpio_pin;
-    config.pa_pin_config.gpiote_ch_id = p_cfg->pa_gpiote_ch_id;
-
-    config.ppi_ch_id_set = p_cfg->ppi_ch_id_set;
-    config.ppi_ch_id_clr = p_cfg->ppi_ch_id_clr;
+    config.lna_pin_config.enable = p_cfg->lna_cfg.enable;
+    config.pa_pin_config.enable  = p_cfg->pa_cfg.enable;
 
     nrf_fem_interface_configuration_set(&config);
 }
@@ -265,22 +256,10 @@ void nrf_802154_fem_control_cfg_set(nrf_802154_fem_control_cfg_t const * const p
 void nrf_802154_fem_control_cfg_get(nrf_802154_fem_control_cfg_t * p_cfg)
 {
     nrf_fem_interface_config_t config;
-
     nrf_fem_interface_configuration_get(&config);
 
-    p_cfg->lna_cfg.active_high = config.lna_pin_config.active_high;
-    p_cfg->lna_cfg.enable      = config.lna_pin_config.enable;
-    p_cfg->lna_cfg.gpio_pin    = config.lna_pin_config.gpio_pin;
-
-    p_cfg->pa_cfg.active_high = config.pa_pin_config.active_high;
-    p_cfg->pa_cfg.enable      = config.pa_pin_config.enable;
-    p_cfg->pa_cfg.gpio_pin    = config.pa_pin_config.gpio_pin;
-
-    p_cfg->lna_gpiote_ch_id = config.lna_pin_config.gpiote_ch_id;
-    p_cfg->pa_gpiote_ch_id  = config.pa_pin_config.gpiote_ch_id;
-
-    p_cfg->ppi_ch_id_clr = config.ppi_ch_id_clr;
-    p_cfg->ppi_ch_id_set = config.ppi_ch_id_set;
+    p_cfg->lna_cfg.enable = config.lna_pin_config.enable;
+    p_cfg->pa_cfg.enable  = config.pa_pin_config.enable;
 }
 
 #endif // ENABLE_FEM
