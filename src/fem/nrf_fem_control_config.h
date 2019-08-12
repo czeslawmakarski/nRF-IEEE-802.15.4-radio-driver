@@ -74,10 +74,10 @@ typedef struct
  */
 
 /** Time in microseconds when PA GPIO is activated before the radio is ready for transmission. */
-#define NRF_FEM_PA_TIME_IN_ADVANCE  23
+#define NRF_FEM_PA_TIME_IN_ADVANCE          23
 
 /** Time in microseconds when LNA GPIO is activated before the radio is ready for reception. */
-#define NRF_FEM_LNA_TIME_IN_ADVANCE 5
+#define NRF_FEM_LNA_TIME_IN_ADVANCE         5
 
 /** Radio ramp-up time in TX mode, in microseconds. */
 #define NRF_FEM_RADIO_TX_STARTUP_LATENCY_US 40
