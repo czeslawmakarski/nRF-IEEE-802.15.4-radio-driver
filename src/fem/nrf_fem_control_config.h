@@ -74,16 +74,98 @@ typedef struct
  */
 
 /** Time in microseconds when PA GPIO is activated before the radio is ready for transmission. */
-#define NRF_FEM_PA_TIME_IN_ADVANCE          23
+#define NRF_FEM_PA_TIME_IN_ADVANCE  23
 
 /** Time in microseconds when LNA GPIO is activated before the radio is ready for reception. */
-#define NRF_FEM_LNA_TIME_IN_ADVANCE         5
+#define NRF_FEM_LNA_TIME_IN_ADVANCE 5
 
 /** Radio ramp-up time in TX mode, in microseconds. */
 #define NRF_FEM_RADIO_TX_STARTUP_LATENCY_US 40
 
 /** Radio ramp-up time in RX mode, in microseconds. */
 #define NRF_FEM_RADIO_RX_STARTUP_LATENCY_US 40
+
+#ifdef NRF52811_XXAA
+/** Default Power Amplifier pin. */
+#define NRF_FEM_CONTROL_DEFAULT_PA_PIN  19
+
+/** Default Low Noise Amplifier pin. */
+#define NRF_FEM_CONTROL_DEFAULT_LNA_PIN 20
+
+#else
+
+/** Default Power Amplifier pin. */
+#define NRF_FEM_CONTROL_DEFAULT_PA_PIN  15
+
+/** Default Low Noise Amplifier pin. */
+#define NRF_FEM_CONTROL_DEFAULT_LNA_PIN 16
+#endif
+
+/** Default PPI channel for pin setting. */
+#define NRF_FEM_CONTROL_DEFAULT_SET_PPI_CHANNEL    15
+
+/** Default PPI channel for pin clearing. */
+#define NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL    16
+
+/** Default GPIOTE channel for FEM control. */
+#define NRF_FEM_CONTROL_DEFAULT_LNA_GPIOTE_CHANNEL 6
+
+/** Default GPIOTE channel for FEM control. */
+#define NRF_FEM_CONTROL_DEFAULT_PA_GPIOTE_CHANNEL  7
+
+/**
+ * @section Configuration
+ */
+
+#if ENABLE_FEM
+
+/**
+ * @brief Configures the PA and LNA device interface.
+ *
+ * This function sets device interface parameters for the PA/LNA module.
+ * The module can then be used to control a power amplifier or a low noise amplifier (or both) through the given interface and resources.
+ *
+ * The function also sets the PPI and GPIOTE channels to be configured for the PA/LNA interface.
+ *
+ * @param[in] p_config Pointer to the interface parameters for the PA/LNA device.
+ *
+ * @retval   ::NRF_SUCCESS                 PA/LNA control successfully configured.
+ * @retval   ::NRF_ERROR_NOT_SUPPORTED     PA/LNA is not available.
+ *
+ */
+int32_t nrf_fem_interface_configuration_set(nrf_fem_interface_config_t const * const p_config);
+
+/**
+ * @brief Retrieves the configuration of PA and LNA device interface.
+ *
+ * This function gets device interface parameters for the PA/LNA module.
+ * The module can then be used to control a power amplifier or a low noise amplifier (or both) through the given interface and resources.
+ *
+ *
+ * @param[in] p_config Pointer to the interface parameters for the PA/LNA device to be populated.
+ *
+ * @retval   ::NRF_SUCCESS                 PA/LNA control successfully configured.
+ * @retval   ::NRF_ERROR_NOT_SUPPORTED     PA/LNA is not available.
+ *
+ */
+int32_t nrf_fem_interface_configuration_get(nrf_fem_interface_config_t * p_config);
+
+#else // ENABLE_FEM
+
+static inline int32_t nrf_fem_interface_configuration_set(
+    nrf_fem_interface_config_t const * const p_config)
+{
+    (void)p_config;
+    return NRF_ERROR_NOT_SUPPORTED;
+}
+
+static inline int32_t nrf_fem_interface_configuration_get(nrf_fem_interface_config_t * p_config)
+{
+    (void)p_config;
+    return NRF_ERROR_NOT_SUPPORTED;
+}
+
+#endif // ENABLE_FEM
 
 #ifdef __cplusplus
 }
