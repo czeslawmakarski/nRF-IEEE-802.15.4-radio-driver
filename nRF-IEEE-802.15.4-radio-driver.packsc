@@ -364,7 +364,7 @@
                 "_files": [
                     "src/fem/simple_gpio/nrf_fem_simple_gpio.c"
                 ],
-                "_name": "simple_gpio"
+                "_name": "simple"
             },
             {
                 "_attrs": [
