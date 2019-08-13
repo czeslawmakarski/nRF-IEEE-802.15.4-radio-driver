@@ -115,7 +115,7 @@ typedef struct
 #define NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL    16
 
 /** Default PPI channel for PDN pin handling. */
-#define NRF_FEM_CONTROL_DEFAULT_PDN_PPI_CHANNEL    17
+#define NRF_FEM_CONTROL_DEFAULT_PDN_PPI_CHANNEL    5
 
 /** Default GPIOTE channel for PDN control. */
 #define NRF_FEM_CONTROL_DEFAULT_PDN_GPIOTE_CHANNEL 5
