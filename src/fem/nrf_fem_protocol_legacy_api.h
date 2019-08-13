@@ -35,7 +35,9 @@
  */
 typedef struct
 {
-    uint8_t enable; /**< Enable toggling for this amplifier. */
+    uint8_t enable      : 1; /**< Enable toggling for this amplifier. */
+    uint8_t active_high : 1; /**< Set the pin to be active high. */
+    uint8_t gpio_pin    : 6; /**< The GPIO pin to be toggled for this amplifier. */
 } nrf_fem_control_pa_lna_cfg_t;
 
 /**
@@ -54,4 +56,8 @@ typedef struct
 {
     nrf_fem_control_pa_lna_cfg_t pa_cfg;           /**< Power Amplifier configuration. */
     nrf_fem_control_pa_lna_cfg_t lna_cfg;          /**< Low Noise Amplifier configuration. */
+    uint8_t                      pa_gpiote_ch_id;  /**< GPIOTE channel used for Power Amplifier pin toggling. */
+    uint8_t                      lna_gpiote_ch_id; /**< GPIOTE channel used for Low Noise Amplifier pin toggling. */
+    uint8_t                      ppi_ch_id_set;    /**< PPI channel used for radio Power Amplifier and Low Noise Amplifier pins setting. */
+    uint8_t                      ppi_ch_id_clr;    /**< PPI channel used for radio pin clearing. */    
 } nrf_fem_control_cfg_t;
