@@ -364,7 +364,7 @@
                 "_files": [
                     "src/fem/simple_gpio/nrf_fem_simple_gpio.c"
                 ],
-                "_name": "simple"
+                "_name": "simple_gpio"
             },
             {
                 "_attrs": [
@@ -393,7 +393,8 @@
                 ],
                 "_includes": [
                     "cmock",
-                    "src/fem"
+                    "src/fem",
+                    "src/fem/none"
                 ],
                 "_name": "cmock"
             },
