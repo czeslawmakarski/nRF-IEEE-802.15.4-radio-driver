@@ -186,9 +186,9 @@ int32_t nrf_802154_fal_lna_configuration_set(const nrf_802154_fal_event_t * cons
  * @retval   ::NRF_ERROR_INVALID_STATE   LNA activate setup purge could not be performed due to invalid or missing configuration parameters
  *                                       in p_activate_event or p_deactivate_event, or both.
  */
-int32_t nrf_802154_fal_lna_configuration_clear(const nrf_802154_fal_event_t * const p_activate_event,
+int32_t nrf_802154_fal_lna_configuration_clear(
+    const nrf_802154_fal_event_t * const p_activate_event,
     const nrf_802154_fal_event_t * const p_deactivate_event);
-
 
 /**
  * @brief Deactivates PA/LNA pins with immediate effect.
@@ -221,7 +221,9 @@ void nrf_802154_fal_pa_is_configured(int8_t * const p_gain);
  * @return bool Whether the scheduling of the transition was successful or not.
  *
  */
-bool nrf_fem_prepare_powerdown(NRF_TIMER_Type * p_instance, uint32_t compare_channel, nrf_ppi_channel_t ppi_id);
+bool nrf_fem_prepare_powerdown(NRF_TIMER_Type  * p_instance,
+                               uint32_t          compare_channel,
+                               nrf_ppi_channel_t ppi_id);
 
 #else // ENABLE_FEM
 
@@ -271,14 +273,15 @@ static inline void nrf_802154_fal_cleanup(void)
 
 }
 
-static inline bool nrf_fem_prepare_powerdown(NRF_TIMER_Type * p_instance, uint32_t compare_channel, nrf_ppi_channel_t ppi_id)
+static inline bool nrf_fem_prepare_powerdown(NRF_TIMER_Type  * p_instance,
+                                             uint32_t          compare_channel,
+                                             nrf_ppi_channel_t ppi_id)
 {
     (void)p_instance;
     (void)compare_channel;
     (void)ppi_id;
     return false;
 }
-
 
 static inline void nrf_802154_fal_pa_is_configured(int8_t * const p_gain)
 {

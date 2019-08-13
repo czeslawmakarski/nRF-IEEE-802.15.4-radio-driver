@@ -83,7 +83,8 @@ int32_t nrf_fem_interface_configuration_get(nrf_fem_interface_config_t * p_confi
 
 typedef void nrf_fem_interface_config_t;
 
-static inline int32_t nrf_fem_interface_configuration_set(nrf_fem_interface_config_t const * const p_config)
+static inline int32_t nrf_fem_interface_configuration_set(
+    nrf_fem_interface_config_t const * const p_config)
 {
     (void)p_config;
     return NRF_ERROR_NOT_SUPPORTED;

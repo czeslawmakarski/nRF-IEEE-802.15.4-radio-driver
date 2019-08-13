@@ -155,7 +155,7 @@ typedef nrf_fem_control_cfg_t nrf_802154_fem_control_cfg_t;
  *
  * @note This function is deprecated. Only to be used with Skyworks module.
  *       Consider using nrf_fem_interface_configuration_set instead.
- * 
+ *
  * @param[in] p_cfg Pointer to the PA & LNA GPIO toggle configuration.
  *
  */

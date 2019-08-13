@@ -192,8 +192,8 @@ static const nrf_802154_fal_event_t m_activate_rx_cc0 =
  .event.timer.p_timer_instance =
      NRF_802154_TIMER_INSTANCE,
  .event.timer.compare_channel_mask = ((1 << NRF_TIMER_CC_CHANNEL0) | (1 << NRF_TIMER_CC_CHANNEL2)),
-        .event.timer.counter_value =
-         RX_RAMP_UP_TIME};
+ .event.timer.counter_value        =
+     RX_RAMP_UP_TIME};
 
 static const nrf_802154_fal_event_t m_activate_tx_cc0 =
 {.type                         = NRF_802154_FAL_EVENT_TYPE_TIMER,
@@ -201,8 +201,8 @@ static const nrf_802154_fal_event_t m_activate_tx_cc0 =
  .event.timer.p_timer_instance =
      NRF_802154_TIMER_INSTANCE,
  .event.timer.compare_channel_mask = ((1 << NRF_TIMER_CC_CHANNEL0) | (1 << NRF_TIMER_CC_CHANNEL2)),
-        .event.timer.counter_value =
-         TX_RAMP_UP_TIME};
+ .event.timer.counter_value        =
+     TX_RAMP_UP_TIME};
 
 static const nrf_802154_fal_event_t m_ccaidle =
 {.type                           = NRF_802154_FAL_EVENT_TYPE_GENERIC,
@@ -1075,11 +1075,14 @@ static void rx_terminate(void)
         ints_to_disable |= NRF_RADIO_INT_CRCOK_MASK;
         nrf_radio_int_disable(ints_to_disable);
         nrf_radio_shorts_set(SHORTS_IDLE);
-        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START);
+        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE,
+                                                  NRF_TIMER_CC_CHANNEL0,
+                                                  PPI_EGU_TIMER_START);
+
         nrf_radio_task_trigger(NRF_RADIO_TASK_DISABLE);
         if (shutdown)
         {
-            while(!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
+            while (!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
             {
                 // Wait until the event is set.
             }
@@ -1160,12 +1163,15 @@ static void tx_terminate(void)
 
         nrf_radio_int_disable(ints_to_disable);
         nrf_radio_shorts_set(SHORTS_IDLE);
-        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START);
+        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE,
+                                                  NRF_TIMER_CC_CHANNEL0,
+                                                  PPI_EGU_TIMER_START);
+
         nrf_radio_task_trigger(NRF_RADIO_TASK_CCASTOP);
         nrf_radio_task_trigger(NRF_RADIO_TASK_DISABLE);
         if (shutdown)
         {
-            while(!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
+            while (!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
             {
                 // Wait until the event is set.
             }
@@ -1215,7 +1221,9 @@ static void ed_terminate(void)
 
     if (timeslot_is_granted())
     {
-        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START);
+        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE,
+                                                  NRF_TIMER_CC_CHANNEL0,
+                                                  PPI_EGU_TIMER_START);
 
         nrf_radio_int_disable(NRF_RADIO_INT_EDEND_MASK);
         nrf_radio_shorts_set(SHORTS_IDLE);
@@ -1224,7 +1232,7 @@ static void ed_terminate(void)
 
         if (shutdown)
         {
-            while(!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
+            while (!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
             {
                 // Wait until the event is set.
             }
@@ -1248,7 +1256,9 @@ static void cca_terminate(void)
 
     if (timeslot_is_granted())
     {
-        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START);
+        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE,
+                                                  NRF_TIMER_CC_CHANNEL0,
+                                                  PPI_EGU_TIMER_START);
 
         nrf_radio_int_disable(NRF_RADIO_INT_CCABUSY_MASK | NRF_RADIO_INT_CCAIDLE_MASK);
         nrf_radio_shorts_set(SHORTS_IDLE);
@@ -1257,7 +1267,7 @@ static void cca_terminate(void)
 
         if (shutdown)
         {
-            while(!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
+            while (!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
             {
                 // Wait until the event is set.
             }
@@ -1278,12 +1288,14 @@ static void continuous_carrier_terminate(void)
 
     if (timeslot_is_granted())
     {
-        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START);
+        bool shutdown = nrf_fem_prepare_powerdown(NRF_802154_TIMER_INSTANCE,
+                                                  NRF_TIMER_CC_CHANNEL0,
+                                                  PPI_EGU_TIMER_START);
 
         nrf_radio_task_trigger(NRF_RADIO_TASK_DISABLE);
         if (shutdown)
         {
-            while(!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
+            while (!nrf_timer_event_check(NRF_802154_TIMER_INSTANCE, NRF_TIMER_EVENT_COMPARE0))
             {
                 // Wait until the event is set.
             }
@@ -1535,6 +1547,7 @@ static void rx_init(bool disabled_was_triggered)
                             NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
 
     uint32_t delta_time;
+
     if (nrf_802154_fal_lna_configuration_set(&m_activate_rx_cc0, NULL) == NRF_SUCCESS)
     {
         delta_time = nrf_timer_cc_read(NRF_802154_TIMER_INSTANCE,

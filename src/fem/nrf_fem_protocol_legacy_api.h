@@ -59,5 +59,5 @@ typedef struct
     uint8_t                      pa_gpiote_ch_id;  /**< GPIOTE channel used for Power Amplifier pin toggling. */
     uint8_t                      lna_gpiote_ch_id; /**< GPIOTE channel used for Low Noise Amplifier pin toggling. */
     uint8_t                      ppi_ch_id_set;    /**< PPI channel used for radio Power Amplifier and Low Noise Amplifier pins setting. */
-    uint8_t                      ppi_ch_id_clr;    /**< PPI channel used for radio pin clearing. */    
+    uint8_t                      ppi_ch_id_clr;    /**< PPI channel used for radio pin clearing. */
 } nrf_fem_control_cfg_t;
