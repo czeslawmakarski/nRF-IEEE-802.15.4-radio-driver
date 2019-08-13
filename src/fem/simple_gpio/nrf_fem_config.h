@@ -65,8 +65,8 @@ typedef struct
     nrf_fem_gpiote_pin_config_t pa_pin_config;  /* Power Amplifier pin configuration. */
     nrf_fem_gpiote_pin_config_t lna_pin_config; /* Low Noise Amplifier pin configuration. */
 
-    int                         ppi_ch_id_set;  /* PPI channel to be used for setting pins. */
-    int                         ppi_ch_id_clr;  /* PPI channel to be used for clearing pins. */
+    uint8_t                     ppi_ch_id_set;  /* PPI channel to be used for setting pins. */
+    uint8_t                     ppi_ch_id_clr;  /* PPI channel to be used for clearing pins. */
 } nrf_fem_interface_config_t;
 
 /**
@@ -74,10 +74,10 @@ typedef struct
  */
 
 /** Time in microseconds when PA GPIO is activated before the radio is ready for transmission. */
-#define NRF_FEM_PA_TIME_IN_ADVANCE  23
+#define NRF_FEM_PA_TIME_IN_ADVANCE_US  23
 
 /** Time in microseconds when LNA GPIO is activated before the radio is ready for reception. */
-#define NRF_FEM_LNA_TIME_IN_ADVANCE 5
+#define NRF_FEM_LNA_TIME_IN_ADVANCE_US 5
 
 #ifdef NRF52811_XXAA
 /** Default Power Amplifier pin. */

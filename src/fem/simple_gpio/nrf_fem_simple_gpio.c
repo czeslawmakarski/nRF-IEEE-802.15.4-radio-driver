@@ -57,8 +57,8 @@ static nrf_fem_interface_config_t m_nrf_fem_interface_config =             /**< 
 {
     .fem_config =
     {
-        .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE,
-        .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE
+        .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE_US,
+        .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE_US
     },
     .pa_pin_config =
     {
@@ -459,6 +459,9 @@ void nrf_802154_fal_cleanup(void)
 
 bool nrf_fem_prepare_powerdown(NRF_TIMER_Type * p_instance, uint32_t compare_channel, nrf_ppi_channel_t ppi_id)
 {
+    (void)p_instance;
+    (void)compare_channel;
+    (void)ppi_id;
     return false;
 }
 

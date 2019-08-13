@@ -58,10 +58,10 @@ static nrf_fem_interface_config_t m_nrf_fem_interface_config =             /**< 
 {       
     .fem_config =
     {
-        .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE,
-        .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE,
-        .pdn_settle_us = NRF_FEM_PDN_SETTLE_TIME_IN_ADVANCE,
-        .trx_hold_us = NRF_FEM_TRX_HOLD_TIME_IN_ADVANCE,
+        .pa_time_gap_us = NRF_FEM_PA_TIME_IN_ADVANCE_US,
+        .lna_time_gap_us = NRF_FEM_LNA_TIME_IN_ADVANCE_US,
+        .pdn_settle_us = NRF_FEM_PDN_SETTLE_US,
+        .trx_hold_us = NRF_FEM_TRX_HOLD_US,
     },                                                              
     .pa_pin_config =
     {

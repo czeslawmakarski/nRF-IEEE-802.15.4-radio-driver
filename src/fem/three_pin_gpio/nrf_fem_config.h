@@ -78,16 +78,16 @@ typedef struct
  */
 
 /** Time in microseconds when PA GPIO is activated before the radio is ready for transmission. */
-#define NRF_FEM_PA_TIME_IN_ADVANCE  13
+#define NRF_FEM_PA_TIME_IN_ADVANCE_US  13
 
 /** Time in microseconds when LNA GPIO is activated before the radio is ready for reception. */
-#define NRF_FEM_LNA_TIME_IN_ADVANCE 13
+#define NRF_FEM_LNA_TIME_IN_ADVANCE_US 13
 
 /** The time between activating the PDN and asserting the RX_EN/TX_EN. */
-#define NRF_FEM_PDN_SETTLE_TIME_IN_ADVANCE 18
+#define NRF_FEM_PDN_SETTLE_US 18
 
 /** The time between deasserting the RX_EN/TX_EN and deactivating PDN. */
-#define NRF_FEM_TRX_HOLD_TIME_IN_ADVANCE 5
+#define NRF_FEM_TRX_HOLD_US 5
 
 #ifdef NRF52811_XXAA
 /** Default Power Amplifier pin. */

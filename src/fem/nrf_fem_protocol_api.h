@@ -212,11 +212,11 @@ void nrf_802154_fal_cleanup(void);
 void nrf_802154_fal_pa_is_configured(int8_t * const p_gain);
 
 /**
- * @brief Prepare the FEM module to switch to the Power Down state.
+ * @brief Prepares the FEM module to switch to the Power Down state.
  *
- * @param[in]  p_instance Timer instance which is used to schedule the transition to the Power Down state.
- * @param[in] compare_channel The Compare Channel to hold a value for the timer.
- * @param[in] ppi_id The id of the PPI channel used to switch to the Power Down state.
+ * @param[in] p_instance Timer instance that is used to schedule the transition to the Power Down state.
+ * @param[in] compare_channel Compare channel to hold a value for the timer.
+ * @param[in] ppi_id ID of the PPI channel used to switch to the Power Down state.
  *
  * @return bool Whether the scheduling of the transition was successful or not.
  *
