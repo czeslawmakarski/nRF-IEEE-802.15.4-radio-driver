@@ -223,6 +223,7 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
             assert(p_event->event.timer.compare_channel_mask);
 
             uint32_t compare_channel;
+            uint32_t pdn_task_addr;
 
             /* EN pin */
             compare_channel = get_available_compare_channel(p_event->event.timer.compare_channel_mask, 0);
@@ -238,11 +239,20 @@ static int32_t event_configuration_set(const nrf_802154_fal_event_t * const p_ev
 
 
             /* PDN pin */
+            if (m_nrf_fem_interface_config.pdn_pin_config.active_high)
+            {
+                pdn_task_addr = (uint32_t)(&NRF_GPIOTE->TASKS_SET[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]);
+            }
+            else
+            {
+                pdn_task_addr = (uint32_t)(&NRF_GPIOTE->TASKS_CLR[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]);
+            }
+
             compare_channel = get_available_compare_channel(p_event->event.timer.compare_channel_mask, 1);
             
             nrf_ppi_channel_endpoint_setup(m_nrf_fem_interface_config.ppi_ch_id_pdn,
                                            (uint32_t)(&(p_event->event.timer.p_timer_instance->EVENTS_COMPARE[compare_channel])),
-                                           (uint32_t)(&NRF_GPIOTE->TASKS_SET[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]));
+                                           pdn_task_addr);
 
             nrf_ppi_channel_enable(m_nrf_fem_interface_config.ppi_ch_id_pdn);
 
@@ -284,8 +294,6 @@ static int32_t event_configuration_clear(const nrf_802154_fal_event_t * const p_
     switch (p_event->type)
     {
         case NRF_802154_FAL_EVENT_TYPE_GENERIC:
-            break;
-
         case NRF_802154_FAL_EVENT_TYPE_TIMER:
             break;
 
@@ -501,15 +509,26 @@ void nrf_802154_fal_cleanup(void)
 
 bool nrf_fem_prepare_powerdown(NRF_TIMER_Type * p_instance, uint32_t compare_channel, nrf_ppi_channel_t ppi_id)
 {
+    uint32_t pdn_task_addr;
+
     if (!m_nrf_fem_interface_config.pdn_pin_config.enable)
     {
         return false;
     }
 
+    if (m_nrf_fem_interface_config.pdn_pin_config.active_high)
+    {
+        pdn_task_addr = (uint32_t)(&NRF_GPIOTE->TASKS_CLR[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]);
+    }
+    else
+    {
+        pdn_task_addr = (uint32_t)(&NRF_GPIOTE->TASKS_SET[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]);
+    }
+
     nrf_timer_cc_write(p_instance, compare_channel, m_nrf_fem_interface_config.fem_config.trx_hold_us + 1);
     nrf_ppi_channel_endpoint_setup(m_nrf_fem_interface_config.ppi_ch_id_pdn,
                                    (uint32_t)(&(p_instance->EVENTS_COMPARE[compare_channel])),
-                                   (uint32_t)(&NRF_GPIOTE->TASKS_CLR[m_nrf_fem_interface_config.pdn_pin_config.gpiote_ch_id]));
+                                   pdn_task_addr);
 
     uint32_t event_addr = (uint32_t)nrf_radio_event_address_get(NRF_RADIO_EVENT_DISABLED);
     uint32_t task_addr = (uint32_t)nrf_timer_task_address_get(p_instance, NRF_TIMER_TASK_START);
