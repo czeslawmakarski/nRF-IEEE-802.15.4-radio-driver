@@ -46,7 +46,7 @@ void nrf_802154_wifi_coex_uninit(void)
     // Intentionally empty
 }
 
-nrf_802154_wifi_coex_prio_request(rsch_prio_t priority)
+void nrf_802154_wifi_coex_prio_request(rsch_prio_t priority)
 {
     (void)priority;
     // Intentionally empty
