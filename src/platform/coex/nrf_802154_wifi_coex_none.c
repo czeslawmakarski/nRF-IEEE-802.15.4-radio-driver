@@ -54,7 +54,7 @@ void nrf_802154_wifi_coex_prio_request(rsch_prio_t priority)
 
 void * nrf_802154_wifi_coex_deny_event_addr_get(void)
 {
-    // Intenionally empty
+    // Intentionally empty
     return NULL;
 }
 
