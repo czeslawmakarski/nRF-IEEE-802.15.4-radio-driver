@@ -36,6 +36,10 @@
 
 #include "nrf_802154_wifi_coex.h"
 
+#include "stddef.h"
+
+#include <nrf.h>
+
 void nrf_802154_wifi_coex_init(void)
 {
     // Intentionally empty
