@@ -230,6 +230,7 @@ static inline void all_prec_update(void)
             }
 
             nrf_802154_wifi_coex_prio_request(new_prio);
+            prec_approved_prio_set(RSCH_PREC_COEX, new_prio);
         }
 
         mutex_unlock(&m_req_mutex);
