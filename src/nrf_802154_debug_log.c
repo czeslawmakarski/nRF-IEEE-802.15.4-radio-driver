@@ -40,10 +40,12 @@
 
 #include "nrf.h"
 
-#if ENABLE_DEBUG_LOG
 /// Buffer used to store debug log messages.
 volatile uint32_t nrf_802154_debug_log_buffer[NRF_802154_DEBUG_LOG_BUFFER_LEN];
 /// Index of the log buffer pointing to the element that should be filled with next log message.
 volatile uint32_t nrf_802154_debug_log_ptr = 0;
 
-#endif
+void nrf_802154_debug_log_init(void)
+{
+    // Intentionally empty
+}

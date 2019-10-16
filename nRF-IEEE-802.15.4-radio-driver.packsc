@@ -45,8 +45,7 @@
                     "src/nrf_802154_core.c",
                     "src/nrf_802154_core_hooks.c",
                     "src/nrf_802154_critical_section.c",
-                    "src/nrf_802154_debug_log.c",
-                    "src/nrf_802154_debug_assert.c",
+                    "src/nrf_802154_debug.c",
                     "src/nrf_802154_pib.c",
                     "src/nrf_802154_rssi.c",
                     "src/nrf_802154_rx_buffer.c",
@@ -94,8 +93,7 @@
                     "src/nrf_802154_core.c",
                     "src/nrf_802154_core_hooks.c",
                     "src/nrf_802154_critical_section.c",
-                    "src/nrf_802154_debug_log.c",
-                    "src/nrf_802154_debug_assert.c",
+                    "src/nrf_802154_debug.c",
                     "src/nrf_802154_pib.c",
                     "src/nrf_802154_rssi.c",
                     "src/nrf_802154_rx_buffer.c",
@@ -140,8 +138,7 @@
                     "src/nrf_802154_core.c",
                     "src/nrf_802154_core_hooks.c",
                     "src/nrf_802154_critical_section.c",
-                    "src/nrf_802154_debug_log.c",
-                    "src/nrf_802154_debug_assert.c",
+                    "src/nrf_802154_debug.c",
                     "src/nrf_802154_pib.c",
                     "src/nrf_802154_rssi.c",
                     "src/nrf_802154_rx_buffer.c",
@@ -192,8 +189,7 @@
                     "cmock\\mock_nrf_802154_ack_generator.c",
                     "cmock\\mock_nrf_802154_core_hooks.c",
                     "cmock\\mock_nrf_802154_critical_section.c",
-                    "cmock\\mock_nrf_802154_debug_log.c",
-                    "cmock\\mock_nrf_802154_debug_assert.c",
+                    "cmock\\mock_nrf_802154_debug.c",
                     "cmock\\mock_nrf_802154_filter.c",
                     "cmock\\mock_nrf_802154_frame_parser.c",
                     "cmock\\mock_nrf_802154_notification.c",
@@ -227,8 +223,7 @@
                     "cmock\\mock_nrf_802154_ack_generator.c",
                     "cmock\\mock_nrf_802154_core_hooks.c",
                     "cmock\\mock_nrf_802154_critical_section.c",
-                    "cmock\\mock_nrf_802154_debug_log.c",
-                    "cmock\\mock_nrf_802154_debug_assert.c",
+                    "cmock\\mock_nrf_802154_debug.c",
                     "cmock\\mock_nrf_802154_filter.c",
                     "cmock\\mock_nrf_802154_frame_parser.c",
                     "cmock\\mock_nrf_802154_notification.c",
@@ -453,6 +448,9 @@
         "_description": "This option provides an array containing events logged by the driver.",
         "_defines": [
             "ENABLE_DEBUG_LOG"
+        ],
+        "_files": [
+            "src/nrf_802154_debug_log.c"
         ]
     },
 
@@ -461,6 +459,9 @@
         "_description": "This option disables all IRQ on an assert and enters indefinite loop.",
         "_defines": [
             "ENABLE_DEBUG_ASSERT"
+        ],
+        "_files": [
+            "src/nrf_802154_debug_assert.c"
         ]
     },
 
@@ -477,6 +478,9 @@
         "_description": "This option connects RADIO events with GPIO output.",
         "_defines": [
             "ENABLE_DEBUG_GPIO"
+        ],
+        "_files": [
+            "src/nrf_802154_debug_gpio.c"
         ]
     },
 

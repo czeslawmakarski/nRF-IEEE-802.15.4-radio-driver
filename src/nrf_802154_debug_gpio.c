@@ -43,15 +43,6 @@
 #include "nrf_gpiote.h"
 #include "nrf_ppi.h"
 
-#if ENABLE_DEBUG_LOG
-/// Buffer used to store debug log messages.
-volatile uint32_t nrf_802154_debug_log_buffer[NRF_802154_DEBUG_LOG_BUFFER_LEN];
-/// Index of the log buffer pointing to the element that should be filled with next log message.
-volatile uint32_t nrf_802154_debug_log_ptr = 0;
-
-#endif
-
-#if ENABLE_DEBUG_GPIO
 /**
  * @brief Initialize PPI to toggle GPIO pins on radio events.
  */
@@ -104,46 +95,8 @@ static void raal_simulator_gpio_init(void)
 #endif
 }
 
-#endif // ENABLE_DEBUG_GPIO
-
-void nrf_802154_debug_init(void)
+void nrf_802154_debug_gpio_init(void)
 {
-#if ENABLE_DEBUG_GPIO
     radio_event_gpio_toggle_init();
     raal_simulator_gpio_init();
-#endif // ENABLE_DEBUG_GPIO
 }
-
-#if ENABLE_DEBUG_ASSERT
-void __assert_func(const char * file, int line, const char * func, const char * cond)
-{
-    (void)file;
-    (void)line;
-    (void)func;
-    (void)cond;
-
-#if defined(ENABLE_DEBUG_ASSERT_BKPT) && (ENABLE_DEBUG_ASSERT_BKPT != 0)
-    __BKPT(0);
-#endif
-    __disable_irq();
-
-    while (1)
-        ;
-}
-
-void __aeabi_assert(const char * expr, const char * file, int line)
-{
-    (void)expr;
-    (void)file;
-    (void)line;
-
-#if defined(ENABLE_DEBUG_ASSERT_BKPT) && (ENABLE_DEBUG_ASSERT_BKPT != 0)
-    __BKPT(0);
-#endif
-    __disable_irq();
-
-    while (1)
-        ;
-}
-
-#endif // ENABLE_DEBUG_ASSERT
