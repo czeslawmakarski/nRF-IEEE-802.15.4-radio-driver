@@ -1011,7 +1011,9 @@ bool nrf_802154_trx_rssi_sample_is_available(void)
     return nrf_radio_event_check(NRF_RADIO_EVENT_RSSIEND);
 }
 
-void nrf_802154_trx_transmit_frame(const void * p_transmit_buffer, bool cca)
+void nrf_802154_trx_transmit_frame(const void                            * p_transmit_buffer,
+                                   bool                                    cca,
+                                   nrf_802154_trx_transmit_notifications_t notifications_mask)
 {
     uint32_t ints_to_enable = 0U;
 
@@ -1035,6 +1037,12 @@ void nrf_802154_trx_transmit_frame(const void * p_transmit_buffer, bool cca)
     {
         nrf_radio_event_clear(NRF_RADIO_EVENT_CCABUSY);
         ints_to_enable |= NRF_RADIO_INT_CCABUSY_MASK;
+
+        if ((notifications_mask & TRX_TRANSMIT_NOTIFICATION_CCAIDLE) != 0U)
+        {
+            nrf_radio_event_clear(NRF_RADIO_EVENT_CCAIDLE);
+            ints_to_enable |= NRF_RADIO_INT_CCAIDLE_MASK;
+        }
     }
 
     nrf_radio_event_clear(NRF_RADIO_EVENT_ADDRESS);
@@ -1756,8 +1764,10 @@ static void txframe_finish_disable_ppis(void)
 
 static void txframe_finish_disable_ints(void)
 {
-    nrf_radio_int_disable(
-        NRF_RADIO_INT_PHYEND_MASK | NRF_RADIO_INT_CCABUSY_MASK | NRF_RADIO_INT_ADDRESS_MASK);
+    nrf_radio_int_disable(NRF_RADIO_INT_PHYEND_MASK  |
+                          NRF_RADIO_INT_CCAIDLE_MASK |
+                          NRF_RADIO_INT_CCABUSY_MASK |
+                          NRF_RADIO_INT_ADDRESS_MASK);
 }
 
 static void txframe_finish(void)
@@ -1927,6 +1937,10 @@ static void irq_handler_ccaidle(void)
             standalone_cca_finish();
             m_trx_state = TRX_STATE_FINISHED;
             nrf_802154_trx_standalone_cca_finished(true);
+            break;
+
+        case TRX_STATE_TXFRAME:
+            nrf_802154_trx_transmit_frame_ccaidle();
             break;
 
         default:

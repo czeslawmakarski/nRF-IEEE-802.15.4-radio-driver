@@ -60,6 +60,15 @@ typedef enum
     TRX_RECEIVE_NOTIFICATION_STARTED = (1U << 1),
 } nrf_802154_trx_receive_notifications_t;
 
+typedef enum
+{
+    /**@brief No notifications during frame transmission provided. */
+    TRX_TRANSMIT_NOTIFICATION_NONE = 0U,
+
+    /**@brief Notification @ref nrf_802154_trx_transmit_frame_ccaidle */
+    TRX_TRANSMIT_NOTIFICATION_CCAIDLE = (1U << 1),
+} nrf_802154_trx_transmit_notifications_t;
+
 /**@brief Initializes trx module.
  *
  * This function must be called exactly once, before any other API call. This function sets internal state
@@ -278,7 +287,9 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  *
  * @note To transmit ack after frame is received use @ref nrf_802154_trx_transmit_ack.
  */
-void nrf_802154_trx_transmit_frame(const void * p_transmit_buffer, bool cca);
+void nrf_802154_trx_transmit_frame(const void                            * p_transmit_buffer,
+                                   bool                                    cca,
+                                   nrf_802154_trx_transmit_notifications_t notifications_mask);
 
 /**@brief Puts the trx module into transmit ACK mode.
  *
@@ -505,6 +516,21 @@ extern void nrf_802154_trx_receive_ack_received(void);
  *     - @ref nrf_802154_trx_disable.
  */
 extern void nrf_802154_trx_receive_ack_crcerror(void);
+
+/**@brief Handler called when a cca operation during transmit attempt was successful.
+ *
+ * This handler is called from an ISR when:
+ * - transmit operation with cca has been started with a call to @ref nrf_802154_transmit_frame(cca=true).
+ * - the RADIO detected that channel was free.
+ *
+ * When this handler is called following holds:
+ * - the RADIO peripheral started ramping up (or it ramped up already)
+ * - trx module is in @c TXFRAME state.
+ *
+ * Implementation is not responsible for anything since it serves as
+ * a pure notification of the successful channel assessment during transmission.
+ */
+extern void nrf_802154_trx_transmit_frame_ccaidle(void);
 
 /**@brief Handler called when a cca operation during transmit attempt failed.
  *

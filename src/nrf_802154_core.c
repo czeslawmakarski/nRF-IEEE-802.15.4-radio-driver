@@ -741,7 +741,15 @@ static bool tx_init(const uint8_t * p_data, bool cca, bool disabled_was_triggere
         return false;
     }
 
-    nrf_802154_trx_transmit_frame(p_data, cca);
+    nrf_802154_trx_receive_notifications_t notifications_mask = TRX_TRANSMIT_NOTIFICATION_NONE;
+    if (nrf_802154_coex_tx_request_mode_get() == NRF_802154_COEX_TX_REQUEST_CCA_DONE)
+    {
+        notifications_mask |= TRX_TRANSMIT_NOTIFICATION_CCAIDLE;
+    }
+
+    nrf_802154_trx_transmit_frame(p_data,
+                                  cca,
+                                  notifications_mask);
 
     return true;
 }
@@ -1466,6 +1474,11 @@ void nrf_802154_trx_standalone_cca_finished(bool channel_was_idle)
     rx_init(true);
 
     cca_notify(channel_was_idle);
+}
+
+void nrf_802154_trx_transmit_frame_ccaidle(void)
+{
+    // Intentionally empty
 }
 
 void nrf_802154_trx_transmit_frame_ccabusy(void)
