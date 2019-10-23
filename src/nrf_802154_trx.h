@@ -269,11 +269,11 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  * - If cca succeded (channel was idle):
  *     - The RADIO switches to transmit mode (disables receive mode, starts ramp up in transmit mode).
  *     - The RADIO starts sending sending synchronization header (SHR).
+ *     - If @ref TRX_TRANSMIT_NOTIFICATION_CCAIDLE was present in notifications_mask,
+ *       the @ref nrf_802154_trx_transmit_frame_ccaidle is called.
  *     - @ref nrf_802154_trx_transmit_frame_started handler is called from an ISR just after SHR is sent
  *       (only when @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1).
  *     - @ref nrf_802154_trx_transmit_frame_transmitted handler is called from an ISR after full frame is sent on air.
- *     - If @ref TRX_TRANSMIT_NOTIFICATION_CCAIDLE was present in notifications_mask,
- *       the @ref nrf_802154_trx_transmit_frame_ccaidle is called.
  * - If cca failed (channel was busy):
  *     - The RADIO disables receive mode
  *     - @ref nrf_802154_trx_transmit_frame_ccabusy from an ISR handler is called
