@@ -742,6 +742,7 @@ static bool tx_init(const uint8_t * p_data, bool cca, bool disabled_was_triggere
     }
 
     nrf_802154_trx_receive_notifications_t notifications_mask = TRX_TRANSMIT_NOTIFICATION_NONE;
+
     if (nrf_802154_coex_tx_request_mode_get() == NRF_802154_COEX_TX_REQUEST_CCA_DONE)
     {
         notifications_mask |= TRX_TRANSMIT_NOTIFICATION_CCAIDLE;

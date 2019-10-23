@@ -1764,7 +1764,7 @@ static void txframe_finish_disable_ppis(void)
 
 static void txframe_finish_disable_ints(void)
 {
-    nrf_radio_int_disable(NRF_RADIO_INT_PHYEND_MASK  |
+    nrf_radio_int_disable(NRF_RADIO_INT_PHYEND_MASK |
                           NRF_RADIO_INT_CCAIDLE_MASK |
                           NRF_RADIO_INT_CCABUSY_MASK |
                           NRF_RADIO_INT_ADDRESS_MASK);
