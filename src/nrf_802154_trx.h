@@ -60,6 +60,7 @@ typedef enum
     TRX_RECEIVE_NOTIFICATION_STARTED = (1U << 1),
 } nrf_802154_trx_receive_notifications_t;
 
+/**@brief Notifications that can be enabled for @ref nrf_802154_trx_transmit_frame operation. */
 typedef enum
 {
     /**@brief No notifications during frame transmission provided. */
@@ -271,20 +272,24 @@ bool nrf_802154_trx_receive_buffer_set(void * p_receive_buffer);
  *     - @ref nrf_802154_trx_transmit_frame_started handler is called from an ISR just after SHR is sent
  *       (only when @ref NRF_802154_TX_STARTED_NOTIFY_ENABLED == 1).
  *     - @ref nrf_802154_trx_transmit_frame_transmitted handler is called from an ISR after full frame is sent on air.
+ *     - If @ref TRX_TRANSMIT_NOTIFICATION_CCAIDLE was present in notifications_mask,
+ *       the @ref nrf_802154_trx_transmit_frame_ccaidle is called.
  * - If cca failed (channel was busy):
  *     - The RADIO disables receive mode
  *     - @ref nrf_802154_trx_transmit_frame_ccabusy from an ISR handler is called
  *
- * @param p_transmit_buffer Pointer to a buffer containing frame to transmit.
- *                          Must not be NULL. p_transmit_buffer[0] is the number of
- *                          bytes following p_transmit_buffer[0] to send.
- *                          The number of bytes pointed by p_transmit buffer must
- *                          be at least 1 and not less than p_transmit_buffer[0] + 1.
+ * @param p_transmit_buffer  Pointer to a buffer containing frame to transmit.
+ *                           Must not be NULL. p_transmit_buffer[0] is the number of
+ *                           bytes following p_transmit_buffer[0] to send.
+ *                           The number of bytes pointed by p_transmit buffer must
+ *                           be at least 1 and not less than p_transmit_buffer[0] + 1.
  *
- * @param cca               Selects if CCA procedure should be performed prior to
- *                          real transmission. If false no cca will be performed.
- *                          If true, cca will be performed.
+ * @param cca                Selects if CCA procedure should be performed prior to
+ *                           real transmission. If false no cca will be performed.
+ *                           If true, cca will be performed.
  *
+ * @param notifications_mask Selects additional notifications generated during a frame transmission.
+ *                           It is bitwise combination of @ref nrf_802154_trx_transmit_notifications_t values.
  * @note To transmit ack after frame is received use @ref nrf_802154_trx_transmit_ack.
  */
 void nrf_802154_trx_transmit_frame(const void                            * p_transmit_buffer,

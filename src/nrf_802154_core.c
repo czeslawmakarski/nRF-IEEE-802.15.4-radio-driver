@@ -120,6 +120,8 @@ static volatile rsch_prio_t m_rsch_priority = RSCH_PRIO_IDLE; ///< Last notified
 
 /** @brief Value of argument @c notifications_mask to @ref nrf_802154_trx_receive_frame */
 static nrf_802154_trx_receive_notifications_t m_trx_receive_frame_notifications_mask;
+/** @brief Value of argument @c notifications_mask to @ref nrf_802154_trx_transmit_frame */
+static nrf_802154_trx_transmit_notifications_t m_trx_transmit_frame_notifications_mask;
 
 /***************************************************************************************************
  * @section Common core operations
@@ -689,6 +691,30 @@ static nrf_802154_trx_receive_notifications_t make_trx_frame_receive_notificatio
     return result;
 }
 
+/**@brief Makes value to be passed to @ref nrf_802154_trx_transmit_frame as @c notifications_mask parameter */
+static nrf_802154_trx_transmit_notifications_t make_trx_frame_transmit_notification_mask(void)
+{
+    nrf_802154_trx_transmit_notifications_t result = TRX_TRANSMIT_NOTIFICATION_NONE;
+
+    switch (nrf_802154_pib_coex_tx_request_mode_get())
+    {
+        case NRF_802154_COEX_TX_REQUEST_DISABLED:
+        case NRF_802154_COEX_TX_REQUEST_FRAME_READY:
+        case NRF_802154_COEX_TX_REQUEST_CCA_START:
+            /* No additional notifications required. */
+            break;
+
+        case NRF_802154_COEX_TX_REQUEST_CCA_DONE:
+            result |= TRX_TRANSMIT_NOTIFICATION_CCAIDLE;
+            break;
+
+        default:
+            assert(false);
+    }
+
+    return result;
+}
+
 /** Initialize RX operation. */
 static void rx_init(bool disabled_was_triggered)
 {
@@ -741,16 +767,9 @@ static bool tx_init(const uint8_t * p_data, bool cca, bool disabled_was_triggere
         return false;
     }
 
-    nrf_802154_trx_receive_notifications_t notifications_mask = TRX_TRANSMIT_NOTIFICATION_NONE;
-
-    if (nrf_802154_coex_tx_request_mode_get() == NRF_802154_COEX_TX_REQUEST_CCA_DONE)
-    {
-        notifications_mask |= TRX_TRANSMIT_NOTIFICATION_CCAIDLE;
-    }
-
     nrf_802154_trx_transmit_frame(p_data,
                                   cca,
-                                  notifications_mask);
+                                  m_trx_transmit_frame_notifications_mask);
 
     return true;
 }
@@ -1479,7 +1498,9 @@ void nrf_802154_trx_standalone_cca_finished(bool channel_was_idle)
 
 void nrf_802154_trx_transmit_frame_ccaidle(void)
 {
-    // Intentionally empty
+    assert(m_state == RADIO_STATE_TX);
+    assert(m_trx_transmit_frame_notifications_mask & TRX_TRANSMIT_NOTIFICATION_CCAIDLE);
+    // TODO: Implement coex requesting behavior
 }
 
 void nrf_802154_trx_transmit_frame_ccabusy(void)
@@ -1650,7 +1671,8 @@ bool nrf_802154_core_transmit(nrf_802154_term_t              term_lvl,
         if (result)
         {
             state_set(cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
-            mp_tx_data = p_data;
+            mp_tx_data                              = p_data;
+            m_trx_transmit_frame_notifications_mask = make_trx_frame_transmit_notification_mask();
 
             if (immediate)
             {
