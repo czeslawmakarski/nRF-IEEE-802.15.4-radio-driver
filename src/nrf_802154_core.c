@@ -1760,10 +1760,11 @@ bool nrf_802154_core_transmit(nrf_802154_term_t              term_lvl,
 
         if (result)
         {
-            state_set(cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
-            mp_tx_data                              = p_data;
             m_coex_tx_request_mode                  = nrf_802154_pib_coex_tx_request_mode_get();
             m_trx_transmit_frame_notifications_mask = make_trx_frame_transmit_notification_mask();
+
+            state_set(cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
+            mp_tx_data = p_data;
 
             if (immediate)
             {
