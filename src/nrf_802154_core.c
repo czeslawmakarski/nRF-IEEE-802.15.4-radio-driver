@@ -131,6 +131,8 @@ static nrf_802154_trx_transmit_notifications_t m_trx_transmit_frame_notification
 
 static nrf_802154_timer_t m_rx_prestarted_timer;
 
+/** @brief Value of Coex TX Request mode */
+static nrf_802154_coex_tx_request_mode_t m_coex_tx_request_mode;
 /***************************************************************************************************
  * @section Common core operations
  **************************************************************************************************/
@@ -425,8 +427,6 @@ static bool ed_iter_setup(uint32_t * p_requested_ed_time_us, uint32_t * p_next_t
 
 static rsch_prio_t min_required_rsch_prio(radio_state_t state)
 {
-    nrf_802154_coex_tx_request_mode_t tx_req_mode = nrf_802154_pib_coex_tx_request_mode_get();
-
     switch (state)
     {
         case RADIO_STATE_SLEEP:
@@ -447,7 +447,7 @@ static rsch_prio_t min_required_rsch_prio(radio_state_t state)
             return RSCH_PRIO_TX;
 
         case RADIO_STATE_CCA_TX:
-            if (tx_req_mode != NRF_802154_COEX_TX_REQUEST_CCA_DONE)
+            if (m_coex_tx_request_mode != NRF_802154_COEX_TX_REQUEST_CCA_DONE)
             {
                 return RSCH_PRIO_TX;
             }
@@ -1588,7 +1588,7 @@ void nrf_802154_trx_transmit_frame_ccaidle(void)
 {
     assert(m_state == RADIO_STATE_TX);
     assert(m_trx_transmit_frame_notifications_mask & TRX_TRANSMIT_NOTIFICATION_CCAIDLE);
-    assert(nrf_802154_pib_coex_tx_request_mode_get() == NRF_802154_COEX_TX_REQUEST_CCA_DONE);
+    assert(m_coex_tx_request_mode == NRF_802154_COEX_TX_REQUEST_CCA_DONE);
 
     nrf_802154_rsch_crit_sect_prio_request(RSCH_PRIO_TX);
 }
@@ -1762,6 +1762,7 @@ bool nrf_802154_core_transmit(nrf_802154_term_t              term_lvl,
         {
             state_set(cca ? RADIO_STATE_CCA_TX : RADIO_STATE_TX);
             mp_tx_data                              = p_data;
+            m_coex_tx_request_mode                  = nrf_802154_pib_coex_tx_request_mode_get();
             m_trx_transmit_frame_notifications_mask = make_trx_frame_transmit_notification_mask();
 
             if (immediate)
