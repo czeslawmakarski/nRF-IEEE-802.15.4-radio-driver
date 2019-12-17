@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+/* Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,15 +40,14 @@
 #include <stdint.h>
 
 #include "nrf_802154_core.h"
-#include "hal/nrf_radio.h"
+#include "nrf_radio.h"
 
-#define REQUEST_FUNCTION(func_core, ...)                                                           \
-    bool result;                                                                                   \
-                                                                                                   \
-    result = func_core(__VA_ARGS__);                                                               \
-                                                                                                   \
+#define REQUEST_FUNCTION(func_core, ...) \
+    bool result;                         \
+                                         \
+    result = func_core(__VA_ARGS__);     \
+                                         \
     return result;
-
 
 void nrf_802154_request_init(void)
 {
@@ -75,7 +74,13 @@ bool nrf_802154_request_transmit(nrf_802154_term_t              term_lvl,
                                  bool                           immediate,
                                  nrf_802154_notification_func_t notify_function)
 {
-    REQUEST_FUNCTION(nrf_802154_core_transmit, term_lvl, req_orig, p_data, cca, immediate, notify_function)
+    REQUEST_FUNCTION(nrf_802154_core_transmit,
+                     term_lvl,
+                     req_orig,
+                     p_data,
+                     cca,
+                     immediate,
+                     notify_function)
 }
 
 bool nrf_802154_request_energy_detection(nrf_802154_term_t term_lvl, uint32_t time_us)
@@ -106,4 +111,14 @@ bool nrf_802154_request_channel_update(void)
 bool nrf_802154_request_cca_cfg_update(void)
 {
     REQUEST_FUNCTION(nrf_802154_core_cca_cfg_update)
+}
+
+bool nrf_802154_request_rssi_measure(void)
+{
+    REQUEST_FUNCTION(nrf_802154_core_rssi_measure)
+}
+
+bool nrf_802154_request_rssi_measurement_get(int8_t * p_rssi)
+{
+    REQUEST_FUNCTION(nrf_802154_core_last_rssi_measurement_get, p_rssi)
 }

@@ -47,11 +47,11 @@
 #include <stdint.h>
 
 #include <nrf.h>
-#include "nrf_802154_debug.h"
+#include "../nrf_802154_debug.h"
 #include "platform/lp_timer/nrf_802154_lp_timer.h"
 
 #if defined(__ICCARM__)
-    _Pragma("diag_suppress=Pe167")
+_Pragma("diag_suppress=Pe167")
 #endif
 
 static volatile uint8_t              m_timer_mutex;        ///< Mutex for starting the timer.
@@ -75,7 +75,8 @@ static inline bool mutex_trylock(volatile uint8_t * p_mutex)
             __CLREX();
             return false;
         }
-    } while (__STREXB(1, p_mutex));
+    }
+    while (__STREXB(1, p_mutex));
 
     __DMB();
 
@@ -97,7 +98,8 @@ static inline void queue_cntr_bump(void)
     do
     {
         cntr = __LDREXB(&m_queue_changed_cntr);
-    } while (__STREXB(cntr + 1, &m_queue_changed_cntr));
+    }
+    while (__STREXB(cntr + 1, &m_queue_changed_cntr));
 
     __DMB();
 }
@@ -165,18 +167,24 @@ static inline void handle_timer(void)
 
             mutex_unlock(&m_timer_mutex);
         }
-    } while (queue_cntr != m_queue_changed_cntr);
+    }
+    while (queue_cntr != m_queue_changed_cntr);
 }
 
 /**
- * @brief Remove timer from the queue
+ * @brief Remove a timer from the queue.
  *
- * @param [inout]  p_timer  Pointer to timer to remove from the queue.
+ * The timer to be removed can be running or not running. If the timer is running, it is removed from
+ * the timer queue and the value pointed by the @c p_was_running parameter is set to true. If the timer is not running,
+ * the value pointed by @c p_was_running is set to false.
+ *
+ * @param[in,out]  p_timer        Pointer to the timer to remove from the queue.
+ * @param[out]    p_was_running  Informs a caller if the timer was running. Pass NULL if irrelevant.
  *
  * @retval true   @sa handle_timer() shall be called by caller of this function.
  * @retval false  @sa handle_timer() shall not be called by the caller.
  */
-static bool timer_remove(nrf_802154_timer_t * p_timer)
+static bool timer_remove(nrf_802154_timer_t * p_timer, bool * p_was_running)
 {
     assert(p_timer != NULL);
 
@@ -248,10 +256,13 @@ static bool timer_remove(nrf_802154_timer_t * p_timer)
         }
     }
 
+    bool was_running = false;
+
     // Write to the pointer next on removal to ensure that node removal is detected by
-    // lower pritority context in case it was going to be used.
+    // lower priority context in case it was going to be used.
     if (p_cur != NULL)
     {
+        was_running = true;
         uint32_t temp;
 
         do
@@ -259,7 +270,13 @@ static bool timer_remove(nrf_802154_timer_t * p_timer)
             // This assignment is used to prevent compiler from removing exclusive load during optimization (IAR).
             temp = __LDREXW((uint32_t *)&p_cur->p_next);
             assert((void *)temp != p_cur);
-        } while (__STREXW(temp, (uint32_t *)&p_cur->p_next));
+        }
+        while (__STREXW(temp, (uint32_t *)&p_cur->p_next));
+    }
+
+    if (p_was_running != NULL)
+    {
+        *p_was_running = was_running;
     }
 
     return (timer_start || timer_stop);
@@ -298,6 +315,24 @@ bool nrf_802154_timer_sched_time_is_in_future(uint32_t now, uint32_t t0, uint32_
     return difference > 0;
 }
 
+uint32_t nrf_802154_timer_sched_remaining_time_get(const nrf_802154_timer_t * p_timer)
+{
+    assert(p_timer != NULL);
+
+    uint32_t now        = nrf_802154_lp_timer_time_get();
+    uint32_t expiration = p_timer->t0 + p_timer->dt;
+    int32_t  remaining  = expiration - now;
+
+    if (remaining > 0)
+    {
+        return (uint32_t)remaining;
+    }
+    else
+    {
+        return 0ul;
+    }
+}
+
 void nrf_802154_timer_sched_add(nrf_802154_timer_t * p_timer, bool round_up)
 {
     nrf_802154_log(EVENT_TRACE_ENTER, FUNCTION_TSCH_ADD);
@@ -310,13 +345,13 @@ void nrf_802154_timer_sched_add(nrf_802154_timer_t * p_timer, bool round_up)
         p_timer->dt += nrf_802154_lp_timer_granularity_get() - 1;
     }
 
-    if (timer_remove(p_timer))
+    if (timer_remove(p_timer, NULL))
     {
         handle_timer();
     }
 
     nrf_802154_timer_t ** pp_item;
-    nrf_802154_timer_t *  p_next;
+    nrf_802154_timer_t  * p_next;
     uint8_t               queue_cntr;
 
     while (true)
@@ -374,9 +409,9 @@ void nrf_802154_timer_sched_add(nrf_802154_timer_t * p_timer, bool round_up)
     nrf_802154_log(EVENT_TRACE_EXIT, FUNCTION_TSCH_ADD);
 }
 
-void nrf_802154_timer_sched_remove(nrf_802154_timer_t * p_timer)
+void nrf_802154_timer_sched_remove(nrf_802154_timer_t * p_timer, bool * p_was_running)
 {
-    if (timer_remove(p_timer))
+    if (timer_remove(p_timer, p_was_running))
     {
         handle_timer();
     }
@@ -402,7 +437,8 @@ bool nrf_802154_timer_sched_is_running(nrf_802154_timer_t * p_timer)
                 break;
             }
         }
-    } while (queue_cntr != m_queue_changed_cntr);
+    }
+    while (queue_cntr != m_queue_changed_cntr);
 
     return result;
 }
@@ -413,16 +449,18 @@ void nrf_802154_lp_timer_fired(void)
 
     if (mutex_trylock(&m_fired_mutex))
     {
-        nrf_802154_timer_t * p_timer   = (nrf_802154_timer_t *) mp_head;
+        nrf_802154_timer_t * p_timer = (nrf_802154_timer_t *)mp_head;
 
         if (p_timer != NULL)
         {
             nrf_802154_timer_callback_t callback  = p_timer->callback;
             void                      * p_context = p_timer->p_context;
 
-            (void)timer_remove(p_timer);
+            bool was_running;
 
-            if (callback != NULL)
+            (void)timer_remove(p_timer, &was_running);
+
+            if (was_running && (callback != NULL))
             {
                 callback(p_context);
             }

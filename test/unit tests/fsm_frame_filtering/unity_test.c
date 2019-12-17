@@ -35,22 +35,23 @@
 #include "nrf_802154_config.h"
 #include "nrf_802154_const.h"
 #include "mock_nrf_802154.h"
-#include "mock_nrf_802154_ack_pending_bit.h"
+#include "mock_nrf_802154_ack_data.h"
+#include "mock_nrf_802154_ack_generator.h"
 #include "mock_nrf_802154_core_hooks.h"
 #include "mock_nrf_802154_critical_section.h"
 #include "mock_nrf_802154_debug.h"
 #include "mock_nrf_802154_filter.h"
+#include "mock_nrf_802154_frame_parser.h"
 #include "mock_nrf_802154_notification.h"
 #include "mock_nrf_802154_pib.h"
 #include "mock_nrf_802154_priority_drop.h"
 #include "mock_nrf_802154_procedures_duration.h"
-#include "mock_nrf_802154_revision.h"
 #include "mock_nrf_802154_rsch.h"
 #include "mock_nrf_802154_rssi.h"
 #include "mock_nrf_802154_rx_buffer.h"
 #include "mock_nrf_802154_timer_coord.h"
 #include "mock_nrf_egu.h"
-#include "mock_nrf_fem_control_api.h"
+#include "mock_nrf_fem_protocol_api.h"
 #include "mock_nrf_ppi.h"
 #include "mock_nrf_radio.h"
 #include "mock_nrf_timer.h"
@@ -84,7 +85,7 @@ void nrf_802154_rx_ack_started(void)
     // Intentionally empty.
 }
 
-void nrf_802154_tx_ack_started(void)
+void nrf_802154_tx_ack_started(const uint8_t * p_data)
 {
     // Intentionally empty.
 }
@@ -95,7 +96,7 @@ static uint8_t m_test_tx_buffer[128];
 void setUp(void)
 {
     memset(&m_test_rx_buffer, 0, sizeof(m_test_rx_buffer));
-    m_test_rx_buffer.psdu[0] = TEST_FRAME_SIZE;
+    m_test_rx_buffer.data[0] = TEST_FRAME_SIZE;
     m_test_rx_buffer.free    = true;
 
     mp_current_rx_buffer = &m_test_rx_buffer;
@@ -112,13 +113,12 @@ void tearDown(void)
 
 static void ack_requested_set_rx(void)
 {
-    m_test_rx_buffer.psdu[ACK_REQUEST_OFFSET] |= ACK_REQUEST_BIT;
+    m_test_rx_buffer.data[ACK_REQUEST_OFFSET] |= ACK_REQUEST_BIT;
 }
 
 static void ack_not_requested_set_rx(void)
 {
-
-    m_test_rx_buffer.psdu[ACK_REQUEST_OFFSET] &= ~ACK_REQUEST_BIT;
+    m_test_rx_buffer.data[ACK_REQUEST_OFFSET] &= ~ACK_REQUEST_BIT;
 }
 
 static void ack_requested_set_tx(void)
@@ -133,7 +133,7 @@ static void ack_not_requested_set_tx(void)
 
 static void frame_type_ack_set(void)
 {
-    m_test_rx_buffer.psdu[FRAME_TYPE_OFFSET] |= FRAME_TYPE_ACK;
+    m_test_rx_buffer.data[FRAME_TYPE_OFFSET] |= FRAME_TYPE_ACK;
 }
 
 static void mock_received_frame_notify(void)
@@ -152,7 +152,7 @@ static void mock_received_frame_notify(void)
     nrf_radio_rssi_sample_get_ExpectAndReturn(rssi);
     nrf_802154_rssi_sample_corrected_get_ExpectAndReturn(rssi, corrected_rssi);
     nrf_802154_rssi_lqi_corrected_get_IgnoreAndReturn(corrected_lqi);
-    nrf_802154_notify_received_Expect(m_test_rx_buffer.psdu, -corrected_rssi, expected_lqi);
+    nrf_802154_notify_received_Expect(m_test_rx_buffer.data, -corrected_rssi, expected_lqi);
     nrf_802154_critical_section_nesting_deny_Expect();
 }
 
@@ -165,7 +165,7 @@ static void mock_receive_failed_notify(nrf_802154_rx_error_t error)
 
 static void mock_transmitted_frame_notify(uint8_t * p_expected_ack, int8_t expected_power, int8_t expected_lqi)
 {
-    m_test_rx_buffer.psdu[TEST_FRAME_SIZE - 1] = expected_lqi;
+    m_test_rx_buffer.data[TEST_FRAME_SIZE - 1] = expected_lqi;
 
     nrf_802154_critical_section_nesting_allow_Expect();
     nrf_802154_core_hooks_transmitted_Expect(m_test_tx_buffer);
@@ -193,15 +193,15 @@ static void mock_rx_terminate(void)
     nrf_ppi_channel_disable_Expect(PPI_EGU_RAMP_UP);
     nrf_ppi_channel_disable_Expect(PPI_EGU_TIMER_START);
 
-    nrf_fem_control_ppi_disable_Expect(NRF_FEM_CONTROL_LNA_PIN);
+    nrf_802154_fal_lna_configuration_clear_ExpectAndReturn(&m_activate_rx_cc0, NULL, NRF_SUCCESS);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
 
     nrf_ppi_channel_remove_from_group_Expect(PPI_EGU_RAMP_UP, PPI_CHGRP0);
     nrf_ppi_fork_endpoint_setup_Expect(PPI_EGU_RAMP_UP, 0);
 
     nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
     nrf_timer_shorts_disable_Expect(NRF_802154_TIMER_INSTANCE,
-                                    NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
-                                    NRF_TIMER_SHORT_COMPARE2_STOP_MASK);
+                                    NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
 
     m_rsch_timeslot_is_granted = true;
 
@@ -209,6 +209,7 @@ static void mock_rx_terminate(void)
                                  NRF_RADIO_INT_CRCERROR_MASK |
                                  NRF_RADIO_INT_CRCOK_MASK);
     nrf_radio_shorts_set_Expect(0);
+    nrf_fem_prepare_powerdown_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START, false);
     nrf_radio_task_trigger_Expect(NRF_RADIO_TASK_DISABLE);
 }
 
@@ -217,8 +218,9 @@ static void mock_rx_ack_terminate(void)
     nrf_ppi_channel_disable_Expect(PPI_DISABLED_EGU);
     nrf_ppi_channel_disable_Expect(PPI_EGU_RAMP_UP);
 
-    nrf_fem_control_ppi_disable_Expect(NRF_FEM_CONTROL_LNA_PIN);
-    nrf_fem_control_timer_reset_Expect(NRF_FEM_CONTROL_LNA_PIN, NRF_TIMER_SHORT_COMPARE2_STOP_MASK);
+    nrf_802154_fal_lna_configuration_clear_ExpectAndReturn(&m_activate_rx_cc0, NULL, NRF_SUCCESS);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
+    nrf_timer_shorts_disable_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
     nrf_ppi_channel_disable_Expect(PPI_EGU_TIMER_START);
 
     nrf_ppi_channel_remove_from_group_Expect(PPI_EGU_RAMP_UP, PPI_CHGRP0);
@@ -226,7 +228,8 @@ static void mock_rx_ack_terminate(void)
 
     m_rsch_timeslot_is_granted = true;
 
-    nrf_radio_int_disable_Expect(NRF_RADIO_INT_END_MASK);
+    nrf_radio_int_disable_Expect(NRF_RADIO_INT_END_MASK |
+                                 NRF_RADIO_INT_ADDRESS_MASK);
     nrf_radio_shorts_set_Expect(SHORTS_IDLE);
     nrf_radio_task_trigger_Expect(NRF_RADIO_TASK_DISABLE);
 
@@ -236,27 +239,30 @@ static void mock_rx_ack_terminate(void)
 
 static void mock_tx_terminate(void)
 {
+    m_state = RADIO_STATE_TX;
+
     nrf_ppi_channel_disable_Expect(PPI_DISABLED_EGU);
     nrf_ppi_channel_disable_Expect(PPI_EGU_RAMP_UP);
 
-    nrf_fem_control_ppi_disable_Expect(NRF_FEM_CONTROL_ANY_PIN);
-    nrf_fem_control_timer_reset_Expect(NRF_FEM_CONTROL_ANY_PIN,
-                                       NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
-                                       NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
-    nrf_fem_control_ppi_fork_clear_Expect(NRF_FEM_CONTROL_ANY_PIN, PPI_CCAIDLE_FEM);
-    nrf_ppi_channel_disable_Expect(PPI_CCAIDLE_FEM);
-    nrf_ppi_channel_disable_Expect(PPI_EGU_TIMER_START);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
+    nrf_timer_shorts_disable_Expect(NRF_802154_TIMER_INSTANCE,
+                                    NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
+                                    NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
+
+    nrf_802154_fal_pa_configuration_clear_ExpectAndReturn(&m_activate_tx_cc0, NULL, NRF_SUCCESS);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
+    nrf_ppi_channel_disable_Expect(PPI_EGU_TIMER_START);    
 
     nrf_ppi_channel_remove_from_group_Expect(PPI_EGU_RAMP_UP, PPI_CHGRP0);
     nrf_ppi_fork_endpoint_setup_Expect(PPI_EGU_RAMP_UP, 0);
 
     m_rsch_timeslot_is_granted = true;
 
-    nrf_802154_revision_has_phyend_event_ExpectAndReturn(true);
     nrf_radio_int_disable_Expect(NRF_RADIO_INT_PHYEND_MASK  |
                                  NRF_RADIO_INT_CCABUSY_MASK |
                                  NRF_RADIO_INT_ADDRESS_MASK);
     nrf_radio_shorts_set_Expect(SHORTS_IDLE);
+    nrf_fem_prepare_powerdown_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, PPI_EGU_TIMER_START, false);
     nrf_radio_task_trigger_Expect(NRF_RADIO_TASK_CCASTOP);
     nrf_radio_task_trigger_Expect(NRF_RADIO_TASK_DISABLE);
 }
@@ -266,18 +272,17 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
     uint32_t event_addr;
     uint32_t task_addr;
     uint32_t task2_addr;
-    uint32_t lna_target_time;
-    uint32_t pa_target_time;
+    uint32_t delta_time;
 
     m_rsch_timeslot_is_granted = true;
 
     int8_t power = rand();
     nrf_802154_pib_tx_power_get_ExpectAndReturn(power);
-    nrf_radio_tx_power_set_Expect(power);
+    nrf_radio_txpower_set_Expect(power);
 
     if (free_buffer)
     {
-        nrf_radio_packet_ptr_set_Expect(m_test_rx_buffer.psdu);
+        nrf_radio_packetptr_set_Expect(m_test_rx_buffer.data);
     }
 
     // RADIO setup
@@ -291,18 +296,11 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
                                 NRF_RADIO_INT_CRCOK_MASK);
 
     // FEM setup
-    lna_target_time = rand();
-    pa_target_time = rand();
-    nrf_fem_control_ppi_enable_Expect(NRF_FEM_CONTROL_LNA_PIN, NRF_TIMER_CC_CHANNEL0);
-    nrf_fem_control_delay_get_ExpectAndReturn(NRF_FEM_CONTROL_LNA_PIN, lna_target_time);
-    nrf_fem_control_delay_get_ExpectAndReturn(NRF_FEM_CONTROL_PA_PIN, pa_target_time);
-
-    nrf_timer_shorts_enable_Expect(NRF_802154_TIMER_INSTANCE,
-                                   NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
-                                   NRF_TIMER_SHORT_COMPARE2_STOP_MASK);
-    nrf_timer_cc_write_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, lna_target_time);
-    nrf_timer_cc_write_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL1, lna_target_time + 192 - 40 - 23);
-    nrf_timer_cc_write_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL2, lna_target_time + 192 - 40 - 23 + pa_target_time);
+    nrf_timer_shorts_enable_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
+    delta_time = rand();
+    nrf_802154_fal_lna_configuration_set_ExpectAndReturn(&m_activate_rx_cc0, NULL, NRF_SUCCESS);
+    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, delta_time);
+    nrf_timer_cc_write_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL1, delta_time + ACK_IFS - TXRU_TIME - EVENT_LAT);
 
     // Clear EVENTS that are checked later
     nrf_egu_event_clear_Expect(NRF_802154_SWI_EGU_INSTANCE, EGU_EVENT);
@@ -312,7 +310,7 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
     nrf_ppi_task_address_get_ExpectAndReturn(PPI_CHGRP0_DIS_TASK,
                                              (uint32_t *)task2_addr);
     task_addr = rand();
-    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_RXEN, (uint32_t *)task_addr);
+    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_RXEN, task_addr);
     event_addr = rand();
     nrf_egu_event_address_get_ExpectAndReturn(NRF_802154_SWI_EGU_INSTANCE,
                                               EGU_EVENT,
@@ -334,7 +332,7 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
     task_addr = rand();
     nrf_egu_task_address_get_ExpectAndReturn(NRF_802154_SWI_EGU_INSTANCE, EGU_TASK, (uint32_t *)task_addr);
     event_addr = rand();
-    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_DISABLED, (uint32_t *)event_addr);
+    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_DISABLED, event_addr);
     nrf_ppi_channel_endpoint_setup_Expect(PPI_DISABLED_EGU, event_addr, task_addr);
 
     nrf_ppi_channel_enable_Expect(PPI_EGU_RAMP_UP);
@@ -342,7 +340,7 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
     nrf_ppi_channel_enable_Expect(PPI_DISABLED_EGU);
 
     event_addr = rand();
-    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, (uint32_t *)event_addr);
+    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, event_addr);
     nrf_802154_timer_coord_timestamp_prepare_Expect(event_addr);
 
     mock_ppi_egu_worked(true);
@@ -356,17 +354,22 @@ static void mock_receive_begin(bool free_buffer, uint32_t shorts)
 
 static void mock_ack_requested_rx(void)
 {
-    uint32_t task_addr;
-    uint32_t event_addr;
+    uint8_t * p_ack = (uint8_t *)rand();
+    uint32_t  task_addr;
+    uint32_t  event_addr;
+    uint32_t  time_to_pa = rand();
 
-    nrf_radio_packet_ptr_set_Expect(m_ack_psdu);
-    nrf_802154_revision_has_phyend_event_ExpectAndReturn(true);
+    time_to_pa = (time_to_pa > 0) ? time_to_pa : 1; // Time to ramp up must be greater than 0
+    time_to_pa = (time_to_pa < UINT32_MAX) ? time_to_pa : UINT32_MAX - 1; // Time to ramp up must be lower than max
+
+    nrf_802154_ack_generator_create_ExpectAndReturn(m_test_rx_buffer.data, p_ack);
+    nrf_radio_packetptr_set_Expect(p_ack);
     nrf_radio_shorts_set_Expect(NRF_RADIO_SHORT_TXREADY_START_MASK |
                                 NRF_RADIO_SHORT_PHYEND_DISABLE_MASK);
     nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_TXREADY);
 
     task_addr = rand();
-    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_TXEN, (uint32_t *)task_addr);
+    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_TXEN, task_addr);
     event_addr = rand();
     nrf_timer_event_address_get_ExpectAndReturn(NRF_802154_TIMER_INSTANCE,
                                                 NRF_TIMER_EVENT_COMPARE1,
@@ -375,19 +378,17 @@ static void mock_ack_requested_rx(void)
 
     nrf_ppi_channel_enable_Expect(PPI_TIMER_TX_ACK);
 
-    nrf_fem_control_ppi_disable_Expect(NRF_FEM_CONTROL_LNA_PIN);
-    nrf_fem_control_ppi_enable_Expect(NRF_FEM_CONTROL_PA_PIN, NRF_TIMER_CC_CHANNEL2);
+    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL1, time_to_pa);
+    nrf_802154_fal_pa_configuration_set_IgnoreAndReturn(NRF_SUCCESS);
 
     nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_CAPTURE3);
 
-    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL3, 1);
-    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL1, 2);
+    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL3, time_to_pa - 1);
+    nrf_timer_cc_read_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_CC_CHANNEL0, time_to_pa + 1);
 
-    nrf_802154_ack_pending_bit_should_be_set_ExpectAndReturn(m_test_rx_buffer.psdu, false);
     nrf_radio_int_disable_Expect(NRF_RADIO_INT_BCMATCH_MASK  |
                                  NRF_RADIO_INT_CRCERROR_MASK |
                                  NRF_RADIO_INT_CRCOK_MASK);
-    nrf_802154_revision_has_phyend_event_ExpectAndReturn(true);
     nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_PHYEND);
     nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_ADDRESS);
     nrf_radio_int_enable_Expect(NRF_RADIO_INT_PHYEND_MASK | NRF_RADIO_INT_ADDRESS_MASK);
@@ -414,7 +415,7 @@ static void mock_ack_not_requested_rx(void)
     nrf_ppi_channel_enable_Expect(PPI_DISABLED_EGU);
 
     event_addr = rand();
-    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, (uint32_t *)event_addr);
+    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, event_addr);
     nrf_802154_timer_coord_timestamp_prepare_Expect(event_addr);
 
     nrf_radio_state_get_ExpectAndReturn(NRF_RADIO_STATE_DISABLED);
@@ -430,44 +431,48 @@ static void mock_ack_requested_tx(void)
     uint32_t task_addr_2;
     uint32_t event_addr;
 
+    m_state = RADIO_STATE_TX;
+
     nrf_ppi_channel_disable_Expect(PPI_DISABLED_EGU);
     nrf_radio_shorts_set_Expect(NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
                                 NRF_RADIO_SHORT_END_DISABLE_MASK |
                                 NRF_RADIO_SHORT_RXREADY_START_MASK);
 
-    nrf_radio_packet_ptr_set_Expect(m_test_rx_buffer.psdu);
+    nrf_radio_packetptr_set_Expect(m_test_rx_buffer.data);
 
-    nrf_radio_int_disable_Expect(NRF_RADIO_INT_CCABUSY_MASK |
-                                 NRF_RADIO_INT_ADDRESS_MASK);
 
-    nrf_802154_revision_has_phyend_event_ExpectAndReturn(true);
-    nrf_radio_int_disable_Expect(NRF_RADIO_INT_PHYEND_MASK);
     nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_END);
-    nrf_radio_int_enable_Expect(NRF_RADIO_INT_END_MASK);
+    nrf_radio_int_disable_Expect(NRF_RADIO_INT_CCABUSY_MASK |
+                                 NRF_RADIO_INT_ADDRESS_MASK |
+                                 NRF_RADIO_INT_PHYEND_MASK);
+    nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_ADDRESS);
+    nrf_radio_int_enable_Expect(NRF_RADIO_INT_END_MASK |
+                                NRF_RADIO_INT_ADDRESS_MASK);
 
-    nrf_fem_control_ppi_disable_Expect(NRF_FEM_CONTROL_ANY_PIN);
-    nrf_fem_control_timer_reset_Expect(NRF_FEM_CONTROL_ANY_PIN, NRF_TIMER_SHORT_COMPARE0_STOP_MASK | NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
-    nrf_fem_control_ppi_fork_clear_Expect(NRF_FEM_CONTROL_ANY_PIN, PPI_CCAIDLE_FEM);
-    nrf_ppi_channel_disable_Expect(PPI_CCAIDLE_FEM);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
+    nrf_timer_shorts_disable_Expect(NRF_802154_TIMER_INSTANCE,
+                             NRF_TIMER_SHORT_COMPARE0_STOP_MASK |
+                             NRF_TIMER_SHORT_COMPARE1_STOP_MASK);
+    nrf_802154_fal_pa_configuration_clear_ExpectAndReturn(&m_activate_tx_cc0, NULL, NRF_SUCCESS);
 
-    nrf_fem_control_ppi_enable_Expect(NRF_FEM_CONTROL_LNA_PIN, NRF_TIMER_CC_CHANNEL2);
-    nrf_fem_control_timer_set_Expect(NRF_FEM_CONTROL_LNA_PIN,
-                              NRF_TIMER_CC_CHANNEL2,
-                              NRF_TIMER_SHORT_COMPARE2_STOP_MASK);
+    nrf_timer_task_trigger_Expect(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_SHUTDOWN);
+
+    nrf_802154_fal_lna_configuration_set_ExpectAndReturn(&m_activate_rx_cc0, NULL, NRF_SUCCESS);
     event_addr = rand();
     task_addr_1 = rand();
-    nrf_timer_task_address_get_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_START, (uint32_t *)task_addr_1);
     nrf_egu_event_address_get_ExpectAndReturn(NRF_802154_SWI_EGU_INSTANCE, EGU_EVENT, (uint32_t *)event_addr);
-    nrf_fem_control_ppi_task_setup_Expect(NRF_FEM_CONTROL_LNA_PIN,
-                                          PPI_EGU_TIMER_START,
-                                          event_addr,
-                                          task_addr_1);
+    nrf_timer_task_address_get_ExpectAndReturn(NRF_802154_TIMER_INSTANCE, NRF_TIMER_TASK_START, (uint32_t *)task_addr_1);
+    
+    nrf_timer_shorts_enable_Expect(m_activate_rx_cc0.event.timer.p_timer_instance,
+                                   NRF_TIMER_SHORT_COMPARE0_STOP_MASK);
+    nrf_ppi_channel_endpoint_setup_Expect(PPI_EGU_TIMER_START, event_addr, task_addr_1);
+    nrf_ppi_channel_enable_Expect(PPI_EGU_TIMER_START);
 
     event_addr = rand();
     task_addr_1 = rand();
     task_addr_2 = rand();
     nrf_ppi_task_address_get_ExpectAndReturn(PPI_CHGRP0_DIS_TASK, (uint32_t *)task_addr_2);
-    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_RXEN, (uint32_t *)task_addr_1);
+    nrf_radio_task_address_get_ExpectAndReturn(NRF_RADIO_TASK_RXEN, task_addr_1);
     nrf_egu_event_address_get_ExpectAndReturn(NRF_802154_SWI_EGU_INSTANCE,
                                               EGU_EVENT,
                                               (uint32_t *)event_addr);
@@ -554,7 +559,7 @@ void test_OnBcmatchEventStateRx_ShallDoNothingIfEventCrcerrorIsTriggered(void)
     uint8_t expected_bcc  = (PHR_SIZE + FCF_SIZE) * 8;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, true);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, true);
 
     irq_bcmatch_state_rx();
 }
@@ -567,10 +572,12 @@ void test_OnBcmatchEventStateRx_TransactionShallBeAbortedIfHeaderPartFilteringFa
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_FRAME);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_FRAME);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
+
+    nrf_802154_pib_promiscuous_get_ExpectAndReturn(false);
 
     mock_rx_terminate();
     mock_receive_begin(true, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
@@ -591,9 +598,9 @@ void test_OnBcmatchEventStateRx_TransactionShallBeAbortedIfDstAddrDoesNotMatch(v
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
 
     nrf_802154_pib_promiscuous_get_ExpectAndReturn(false);
@@ -609,6 +616,30 @@ void test_OnBcmatchEventStateRx_TransactionShallBeAbortedIfDstAddrDoesNotMatch(v
     irq_bcmatch_state_rx();
 }
 
+void test_OnBcmatchEventStateRx_TransactionShallBeAbortedIfFrameLengthInvalidInPromiscuousMode(void)
+{
+    uint8_t expected_size = PHR_SIZE + FCF_SIZE;
+    uint8_t expected_bcc  = (PHR_SIZE + FCF_SIZE) * 8;
+
+    m_flags.rx_timeslot_requested = true;
+
+    nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_LENGTH);
+    nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
+
+    mock_rx_terminate();
+    mock_receive_begin(true, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
+                             NRF_RADIO_SHORT_END_DISABLE_MASK |
+                             NRF_RADIO_SHORT_RXREADY_START_MASK |
+                             NRF_RADIO_SHORT_ADDRESS_BCSTART_MASK);
+
+    mock_receive_failed_notify(NRF_802154_RX_ERROR_INVALID_LENGTH);
+
+    irq_bcmatch_state_rx();
+}
+
 void test_OnBcmatchEventStateRx_ShallSetStateToRxFrameIfHeaderPartFilteringFailsInPromiscuousMode(void)
 {
     uint8_t expected_size = PHR_SIZE + FCF_SIZE;
@@ -617,9 +648,9 @@ void test_OnBcmatchEventStateRx_ShallSetStateToRxFrameIfHeaderPartFilteringFails
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
 
     nrf_802154_pib_promiscuous_get_ExpectAndReturn(true);
@@ -636,7 +667,7 @@ void test_OnBcmatchEventStateRx_ShallSkipFrameFilteringIfFrameWasAlreadyFiltered
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
     irq_bcmatch_state_rx();
 }
@@ -651,9 +682,9 @@ void test_OnBcmatchEventStateRx_BccShallBeSetAndFrameFilteredFlagShallBeFalseIfH
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_initial_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_NONE);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_NONE);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
     nrf_802154_filter_frame_part_ReturnThruPtr_p_num_bytes(&expected_updated_size);
 
@@ -672,9 +703,9 @@ void test_OnBcmatchEventStateRx_FrameFilteredFlagShallBeTrueAndStateSetToRxFrame
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_initial_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_NONE);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_NONE);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
     nrf_802154_filter_frame_part_ReturnThruPtr_p_num_bytes(&expected_initial_size);
 
@@ -688,17 +719,21 @@ void test_OnBcmatchEventStateRx_TimeslotShouldBeRequested(void)
     uint8_t  expected_size = PHR_SIZE + FCF_SIZE;
     uint8_t  expected_bcc  = (PHR_SIZE + FCF_SIZE) * 8;
     uint16_t duration      = rand();
+    bool     ack_req       = m_test_rx_buffer.data[ACK_REQUEST_OFFSET] & ACK_REQUEST_BIT;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
 
     nrf_802154_pib_promiscuous_get_ExpectAndReturn(true);
 
-    nrf_802154_rx_duration_get_ExpectAndReturn(m_test_rx_buffer.psdu[0], false, duration);
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, ack_req);
+    nrf_802154_rx_duration_get_ExpectAndReturn(m_test_rx_buffer.data[0], false, duration);
     nrf_802154_rsch_timeslot_request_ExpectAndReturn(duration, true);
+
+    nrf_802154_core_hooks_rx_started_Expect(m_test_rx_buffer.data);
 
     irq_bcmatch_state_rx();
 
@@ -709,16 +744,18 @@ void test_OnBcmatchEventStateRx_ShallResetRadioIfTimeslotNotGranted(void)
 {
     uint8_t  expected_bcc  = (PHR_SIZE + FCF_SIZE) * 8;
     uint16_t duration      = rand();
+    bool     ack_req       = m_test_rx_buffer.data[ACK_REQUEST_OFFSET] & ACK_REQUEST_BIT;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
 
     nrf_802154_pib_promiscuous_get_ExpectAndReturn(true);
 
-    nrf_802154_rx_duration_get_ExpectAndReturn(m_test_rx_buffer.psdu[0], false, duration);
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, ack_req);
+    nrf_802154_rx_duration_get_ExpectAndReturn(m_test_rx_buffer.data[0], false, duration);
     nrf_802154_rsch_timeslot_request_ExpectAndReturn(duration, false);
 
     mock_rx_terminate();
@@ -738,9 +775,9 @@ void test_OnBcmatchEventStateRx_ShallNotRequestTimeslotIfAlreadyGranted(void)
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_DEST_ADDR);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
 
     nrf_802154_pib_promiscuous_get_ExpectAndReturn(true);
@@ -772,6 +809,8 @@ void test_OnCrcOkEventStateRx_ShallNotifyReceivedFrameIfAckIsNotRequested(void)
 
     ack_not_requested_set_rx();
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, false);
+
     mock_ack_not_requested_rx();
 
     mock_received_frame_notify();
@@ -787,6 +826,7 @@ void test_OnCrcOkEventStateRx_ShallNotifyReceivedFrameIfAckIsRequestedAndAutoAck
 
     ack_requested_set_rx();
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, true);
     nrf_802154_pib_auto_ack_get_ExpectAndReturn(false);
 
     mock_ack_not_requested_rx();
@@ -804,6 +844,7 @@ void test_OnCrcOkEventStateRx_ShallPrepareAckAndSetStateToTxAckIfAckIsRequested(
 
     ack_requested_set_rx();
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, true);
     nrf_802154_pib_auto_ack_get_ExpectAndReturn(true);
 
     mock_ack_requested_rx();
@@ -825,6 +866,8 @@ void test_OnPhyendEventStateTx_ShallSetupAckMatchAcceleratorToCorrectPattern(voi
     uint8_t sequence_number = rand();
     m_test_tx_buffer[DSN_OFFSET] = sequence_number;
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_tx_buffer, true);
+
     mock_ack_requested_tx();
 
     nrf_radio_event_clear_Expect(NRF_RADIO_EVENT_MHRMATCH);
@@ -839,6 +882,8 @@ void test_OnPhyendEventStateTx_ShallNotifyFrameAndNotSetupAckMatchAcceleratorIfA
     ack_not_requested_set_tx();
     m_flags.tx_started = true;
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_tx_buffer, false);
+
     mock_tx_terminate();
     mock_receive_begin(true, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
                              NRF_RADIO_SHORT_END_DISABLE_MASK |
@@ -852,7 +897,7 @@ void test_OnPhyendEventStateTx_ShallNotifyFrameAndNotSetupAckMatchAcceleratorIfA
 
 void test_OnEndEventStateRxAck_ShallCallTransmitFailedOnAckMismatch(void)
 {
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_MHRMATCH, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_MHRMATCH, false);
 
     mock_rx_ack_terminate();
     mock_receive_begin(true, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
@@ -867,8 +912,8 @@ void test_OnEndEventStateRxAck_ShallCallTransmitFailedOnAckMismatch(void)
 
 void test_OnEndEventStateRxAck_ShallNotifyFrameTransmittedOnAckMatch(void)
 {
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_MHRMATCH, true);
-    nrf_radio_crc_status_get_ExpectAndReturn(NRF_RADIO_CRC_STATUS_OK);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_MHRMATCH, true);
+    nrf_radio_crc_status_check_ExpectAndReturn(true);
 
     mock_rx_ack_terminate();
     mock_receive_begin(false, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
@@ -889,7 +934,7 @@ void test_OnEndEventStateRxAck_ShallNotifyFrameTransmittedOnAckMatch(void)
     nrf_radio_rssi_sample_get_ExpectAndReturn(-rssi);
     nrf_802154_rssi_sample_corrected_get_ExpectAndReturn(-rssi, -corrected_rssi);
     nrf_802154_rssi_lqi_corrected_get_IgnoreAndReturn(corrected_lqi);
-    mock_transmitted_frame_notify(m_test_rx_buffer.psdu, corrected_rssi, expected_lqi);
+    mock_transmitted_frame_notify(m_test_rx_buffer.data, corrected_rssi, expected_lqi);
     irq_end_state_rx_ack();
 }
 
@@ -905,9 +950,9 @@ void test_OnBcmatchEventStateRx_ShallSetPsduBeingReceivedOnSuccessfullFiltration
     m_flags.rx_timeslot_requested = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_initial_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_NONE);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_NONE);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
     nrf_802154_filter_frame_part_ReturnThruPtr_p_num_bytes(&expected_initial_size);
 
@@ -925,10 +970,12 @@ void test_OnBcmatchEventStateRx_ShallClearPsduBeingReceivedFlagOnFailedFiltering
     m_flags.psdu_being_received   = true;
 
     nrf_radio_bcc_get_ExpectAndReturn(expected_bcc);
-    nrf_radio_event_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
+    nrf_radio_event_check_ExpectAndReturn(NRF_RADIO_EVENT_CRCERROR, false);
 
-    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.psdu, NULL, NRF_802154_RX_ERROR_INVALID_FRAME);
+    nrf_802154_filter_frame_part_ExpectAndReturn(m_test_rx_buffer.data, NULL, NRF_802154_RX_ERROR_INVALID_FRAME);
     nrf_802154_filter_frame_part_IgnoreArg_p_num_bytes();
+
+    nrf_802154_pib_promiscuous_get_ExpectAndReturn(false);
 
     mock_rx_terminate();
     mock_receive_begin(true, NRF_RADIO_SHORT_ADDRESS_RSSISTART_MASK |
@@ -962,10 +1009,10 @@ void test_OnCrcErrorEventStateRx_ShallClearPsduBeingReceivedFlag(void)
     nrf_ppi_channel_enable_Expect(PPI_DISABLED_EGU);
 
     event_addr = rand();
-    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, (uint32_t *)event_addr);
+    nrf_radio_event_address_get_ExpectAndReturn(NRF_RADIO_EVENT_CRCOK, event_addr);
     nrf_802154_timer_coord_timestamp_prepare_Expect(event_addr);
 
-    nrf_radio_state_get_ExpectAndReturn(NRF_RADIO_STATE_RX_DISABLE);
+    nrf_radio_state_get_ExpectAndReturn(NRF_RADIO_STATE_RXDISABLE);
 
     nrf_802154_critical_section_nesting_allow_Expect();
     nrf_802154_notify_receive_failed_Expect(NRF_802154_RX_ERROR_INVALID_FCS);
@@ -983,6 +1030,8 @@ void test_OnCrcOkEventStateRx_ShallClearPsduBeingReceivedFlagWhenAckIsNotRequest
 
     ack_not_requested_set_rx();
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, false);
+
     mock_ack_not_requested_rx();
 
     mock_received_frame_notify();
@@ -999,6 +1048,7 @@ void test_OnCrcOkEventStateRx_ShallNotClearPsduBeingReceivedFlagWhenAckIsRequest
 
     ack_requested_set_rx();
 
+    nrf_802154_frame_parser_ar_bit_is_set_ExpectAndReturn(m_test_rx_buffer.data, true);
     nrf_802154_pib_auto_ack_get_ExpectAndReturn(true);
 
     mock_ack_requested_rx();
